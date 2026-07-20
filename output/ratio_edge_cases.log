@@ -1,0 +1,703 @@
+N100 FINANCIAL INTELLIGENCE PLATFORM
+SPRINT 2 - DAY 13
+RATIO EDGE CASE REPORT
+======================================================================
+Generated: 2026-07-20 18:02:25.006826
+
+FINANCIAL SECTOR CARVE-OUT
+----------------------------------------------------------------------
+Companies in the Financials broad sector are exempt from the standard high Debt-to-Equity warning because high leverage is structurally normal for banks, NBFCs and similar financial institutions.
+
+Financial-sector companies found: 22
+
+AXISBANK | Axis Bank Ltd | Year: Mar 2024 | Calculated ROCE: 2.61
+BAJAJFINSV | Bajaj Finserv Ltd | Year: Mar 2024 | Calculated ROCE: 11.71
+BAJAJHLDNG | Bajaj Holdings & Investment Ltd | Year: Mar 2024 | Calculated ROCE: 13.86
+BAJFINANCE | Bajaj Finance Ltd | Year: Mar 2024 | Calculated ROCE: 4.36
+BANKBARODA | Bank of Baroda | Year: Mar 2024 | Calculated ROCE: 2.82
+CANBK | Canara Bank | Year: Mar 2024 | Calculated ROCE: 3.16
+CHOLAFIN | Cholamandalam Investment & Finance Company Ltd | Year: Mar 2024 | Calculated ROCE: 3.51
+HDFCBANK | HDFC Bank Ltd | Year: Mar 2024 | Calculated ROCE: 4.89
+HDFCLIFE | HDFC Life Insurance Company Ltd | Year: Mar 2024 | Calculated ROCE: 646.47
+ICICIBANK | ICICI Bank Ltd | Year: Mar 2024 | Calculated ROCE: 5.22
+ICICIGI | ICICI Lombard General Insurance Company Ltd | Year: Mar 2024 | Calculated ROCE: 146.43
+ICICIPRULI | ICICI Prudential Life Insurance Company Ltd | Year: Mar 2024 | Calculated ROCE: 754.89
+INDUSINDBK | IndusInd Bank Ltd | Year: Mar 2024 | Calculated ROCE: 3.56
+IRFC | Indian Railway Finance Corporation Ltd | Year: Mar 2024 | Calculated ROCE: 5.75
+JIOFIN | Jio Financial Services Ltd | Year: Mar 2024 | Calculated ROCE: 1.43
+KOTAKBANK | Kotak Mahindra Bank Ltd
+ | Year: Mar 2024 | Calculated ROCE: 7.23
+LICI | Life Insurance Corporation of India | Year: Mar 2024 | Calculated ROCE: 57.53
+PFC | Power Finance Corporation Ltd | Year: Mar 2024 | Calculated ROCE: 3.49
+PNB | Punjab National Bank | Year: Mar 2024 | Calculated ROCE: nan
+RECLTD | REC Ltd | Year: Mar 2024 | Calculated ROCE: 9.31
+SBILIFE | SBI Life Insurance Company Ltd | Year: Mar 2024 | Calculated ROCE: 14.51
+SHRIRAMFIN | Shriram Finance Ltd
+ | Year: Mar 2024 | Calculated ROCE: 4.32
+
+======================================================================
+ROE / ROCE ANOMALIES
+----------------------------------------------------------------------
+Total anomalies: 54
+
+[1]
+Company ID: ADANIENT
+Company: Adani Enterprises Ltd
+Year: Mar 2024
+Sector: Industrials
+Metric: ROE
+Source Value: 13.64
+Calculated Value: 8.53
+Difference: 5.11
+Category: formula discrepancy
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[2]
+Company ID: ADANIGREEN
+Company: Adani Green Energy Ltd
+Year: Mar 2024
+Sector: Energy
+Metric: ROCE
+Source Value: 96.5
+Calculated Value: 11.49
+Difference: 85.01
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[3]
+Company ID: ADANIPOWER
+Company: Adani Power Ltd
+Year: Mar 2024
+Sector: Energy
+Metric: ROE
+Source Value: 57.1
+Calculated Value: 48.28
+Difference: 8.82
+Category: formula discrepancy
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[4]
+Company ID: AMBUJACEM
+Company: Ambuja Cements Ltd
+Year: Mar 2024
+Sector: Materials
+Metric: ROCE
+Source Value: 12.8
+Calculated Value: 18.51
+Difference: 5.71
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[5]
+Company ID: BAJAJFINSV
+Company: Bajaj Finserv Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 21.14
+Calculated Value: 11.71
+Difference: 9.43
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[6]
+Company ID: BAJAJFINSV
+Company: Bajaj Finserv Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROE
+Source Value: 11.72
+Calculated Value: 25.85
+Difference: 14.13
+Category: version difference
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[7]
+Company ID: BAJFINANCE
+Company: Bajaj Finance Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 11.9
+Calculated Value: 4.36
+Difference: 7.54
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[8]
+Company ID: BEL
+Company: Bharat Electronics Ltd
+Year: Mar 2024
+Sector: Industrials
+Metric: ROCE
+Source Value: 34.6
+Calculated Value: 4504.72
+Difference: 4470.12
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[9]
+Company ID: BEL
+Company: Bharat Electronics Ltd
+Year: Mar 2024
+Sector: Industrials
+Metric: ROE
+Source Value: 26.3
+Calculated Value: 4744.05
+Difference: 4717.75
+Category: data source issue
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[10]
+Company ID: BHARTIARTL
+Company: Bharti Airtel Ltd
+Year: Mar 2024
+Sector: Communication Services
+Metric: ROCE
+Source Value: 13.1
+Calculated Value: 25.1
+Difference: 12.00
+Category: version difference
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[11]
+Company ID: BOSCHLTD
+Company: Bosch Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROCE
+Source Value: 20.6
+Calculated Value: 30.25
+Difference: 9.65
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[12]
+Company ID: BPCL
+Company: Bharat Petroleum Corporation Ltd
+Year: Mar 2024
+Sector: Energy
+Metric: ROE
+Source Value: 41.9
+Calculated Value: 35.51
+Difference: 6.39
+Category: formula discrepancy
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[13]
+Company ID: BRITANNIA
+Company: Britannia Industries Ltd
+Year: Mar 2024
+Sector: Consumer Staples
+Metric: ROCE
+Source Value: 48.9
+Calculated Value: 56.24
+Difference: 7.34
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[14]
+Company ID: CHOLAFIN
+Company: Cholamandalam Investment & Finance Company Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 10.4
+Calculated Value: 3.51
+Difference: 6.89
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[15]
+Company ID: CIPLA
+Company: Cipla Ltd
+
+Year: Mar 2024
+Sector: Healthcare
+Metric: ROCE
+Source Value: 22.8
+Calculated Value: 71.55
+Difference: 48.75
+Category: version difference
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[16]
+Company ID: COALINDIA
+Company: Coal India Ltd
+Year: Mar 2024
+Sector: Materials
+Metric: ROCE
+Source Value: 63.6
+Calculated Value: 105.75
+Difference: 42.15
+Category: version difference
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[17]
+Company ID: COALINDIA
+Company: Coal India Ltd
+Year: Mar 2024
+Sector: Materials
+Metric: ROE
+Source Value: 52.0
+Calculated Value: 45.17
+Difference: 6.83
+Category: formula discrepancy
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[18]
+Company ID: GODREJCP
+Company: Godrej Consumer Products Ltd
+Year: Mar 2024
+Sector: Consumer Staples
+Metric: ROCE
+Source Value: 26.49
+Calculated Value: 4.73
+Difference: 21.76
+Category: version difference
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[19]
+Company ID: GODREJCP
+Company: Godrej Consumer Products Ltd
+Year: Mar 2024
+Sector: Consumer Staples
+Metric: ROE
+Source Value: 6.77
+Calculated Value: -4.45
+Difference: 11.22
+Category: version difference
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[20]
+Company ID: HAL
+Company: Hindustan Aeronautics Ltd
+Year: Mar 2024
+Sector: Industrials
+Metric: ROCE
+Source Value: 38.9
+Calculated Value: 3617.39
+Difference: 3578.49
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[21]
+Company ID: HAL
+Company: Hindustan Aeronautics Ltd
+Year: Mar 2024
+Sector: Industrials
+Metric: ROE
+Source Value: 28.9
+Calculated Value: 3816.58
+Difference: 3787.68
+Category: data source issue
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[22]
+Company ID: HCLTECH
+Company: HCL Technologies Ltd
+Year: Mar 2024
+Sector: Information Technology
+Metric: ROCE
+Source Value: 29.6
+Calculated Value: 34.71
+Difference: 5.11
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[23]
+Company ID: HDFCLIFE
+Company: HDFC Life Insurance Company Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 6.61
+Calculated Value: 646.47
+Difference: 639.86
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[24]
+Company ID: HEROMOTOCO
+Company: Hero MotoCorp Ltd
+
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROCE
+Source Value: 29.1
+Calculated Value: 177.92
+Difference: 148.82
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[25]
+Company ID: HINDALCO
+Company: Hindalco Industries Ltd
+Year: Mar 2024
+Sector: Materials
+Metric: ROCE
+Source Value: 11.3
+Calculated Value: 118.21
+Difference: 106.91
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[26]
+Company ID: HINDUNILVR
+Company: Hindustan Unilever Ltd
+
+Year: Mar 2024
+Sector: Consumer Staples
+Metric: ROCE
+Source Value: 27.2
+Calculated Value: 89.68
+Difference: 62.48
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[27]
+Company ID: ICICIGI
+Company: ICICI Lombard General Insurance Company Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 22.5
+Calculated Value: 146.43
+Difference: 123.93
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[28]
+Company ID: ICICIPRULI
+Company: ICICI Prudential Life Insurance Company Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 8.75
+Calculated Value: 754.89
+Difference: 746.14
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[29]
+Company ID: INDIGO
+Company: Interglobe Aviation Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROCE
+Source Value: 24.5
+Calculated Value: 5643.45
+Difference: 5618.95
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[30]
+Company ID: IRCTC
+Company: Indian Railway Catering & Tourism Corporation Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROCE
+Source Value: 53.8
+Calculated Value: 47.78
+Difference: 6.02
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[31]
+Company ID: IRCTC
+Company: Indian Railway Catering & Tourism Corporation Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROE
+Source Value: 40.4
+Calculated Value: 34.4
+Difference: 6.00
+Category: formula discrepancy
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[32]
+Company ID: LICI
+Company: Life Insurance Corporation of India
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 63.79
+Calculated Value: 57.53
+Difference: 6.26
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[33]
+Company ID: LICI
+Company: Life Insurance Corporation of India
+Year: Mar 2024
+Sector: Financials
+Metric: ROE
+Source Value: 63.61
+Calculated Value: 49.45
+Difference: 14.16
+Category: version difference
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[34]
+Company ID: LT
+Company: Larsen & Toubro Ltd
+Year: Mar 2024
+Sector: Industrials
+Metric: ROCE
+Source Value: 17.18
+Calculated Value: 152.62
+Difference: 135.44
+Category: data source issue
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[35]
+Company ID: LT
+Company: Larsen & Toubro Ltd
+Year: Mar 2024
+Sector: Industrials
+Metric: ROE
+Source Value: 10.49
+Calculated Value: 77.67
+Difference: 67.18
+Category: data source issue
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[36]
+Company ID: M&M
+Company: Mahindra & Mahindra Ltd
+
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROCE
+Source Value: 26.98
+Calculated Value: 16.12
+Difference: 10.86
+Category: version difference
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[37]
+Company ID: MOTHERSON
+Company: Samvardhana Motherson International Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROCE
+Source Value: 13.7
+Calculated Value: 20.54
+Difference: 6.84
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[38]
+Company ID: NESTLEIND
+Company: Nestle India Ltd
+Year: Mar 2024
+Sector: Consumer Staples
+Metric: ROCE
+Source Value: 185.43
+Calculated Value: 162.06
+Difference: 23.37
+Category: version difference
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[39]
+Company ID: NESTLEIND
+Company: Nestle India Ltd
+Year: Mar 2024
+Sector: Consumer Staples
+Metric: ROE
+Source Value: 135.61
+Calculated Value: 117.75
+Difference: 17.86
+Category: version difference
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[40]
+Company ID: PFC
+Company: Power Finance Corporation Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 9.96
+Calculated Value: 3.49
+Difference: 6.47
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[41]
+Company ID: PFC
+Company: Power Finance Corporation Ltd
+Year: Mar 2024
+Sector: Financials
+Metric: ROE
+Source Value: 19.49
+Calculated Value: 26.16
+Difference: 6.67
+Category: formula discrepancy
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[42]
+Company ID: PNB
+Company: Punjab National Bank
+Year: Mar 2024
+Sector: Financials
+Metric: ROE
+Source Value: 8.7
+Calculated Value: 61.32
+Difference: 52.62
+Category: data source issue
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[43]
+Company ID: POWERGRID
+Company: Power Grid Corporation of India Ltd
+Year: Mar 2024
+Sector: Energy
+Metric: ROCE
+Source Value: 13.2
+Calculated Value: 19.17
+Difference: 5.97
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[44]
+Company ID: SHREECEM
+Company: Shree Cement Ltd
+Year: Mar 2024
+Sector: Materials
+Metric: ROCE
+Source Value: 14.8
+Calculated Value: 22.88
+Difference: 8.08
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[45]
+Company ID: SHRIRAMFIN
+Company: Shriram Finance Ltd
+
+Year: Mar 2024
+Sector: Financials
+Metric: ROCE
+Source Value: 11.3
+Calculated Value: 4.32
+Difference: 6.98
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[46]
+Company ID: TATAMOTORS
+Company: Tata Motors Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROCE
+Source Value: 20.1
+Calculated Value: 33.93
+Difference: 13.83
+Category: version difference
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[47]
+Company ID: TATAMOTORS
+Company: Tata Motors Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROE
+Source Value: 49.4
+Calculated Value: 37.46
+Difference: 11.94
+Category: version difference
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[48]
+Company ID: TATAPOWER
+Company: Tata Power Company Ltd
+
+Year: Mar 2024
+Sector: Energy
+Metric: ROCE
+Source Value: 11.1
+Calculated Value: 16.45
+Difference: 5.35
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[49]
+Company ID: TATASTEEL
+Company: Tata Steel Ltd
+
+Year: Mar 2024
+Sector: Materials
+Metric: ROE
+Source Value: 6.55
+Calculated Value: -5.33
+Difference: 11.88
+Category: version difference
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[50]
+Company ID: TCS
+Company: Tata Consultancy Services Ltd
+Year: Mar 2024
+Sector: Information Technology
+Metric: ROE
+Source Value: 0.52
+Calculated Value: 50.94
+Difference: 50.42
+Category: data source issue
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+[51]
+Company ID: TECHM
+Company: Tech Mahindra Ltd
+Year: Mar 2024
+Sector: Information Technology
+Metric: ROCE
+Source Value: 11.9
+Calculated Value: 18.6
+Difference: 6.70
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[52]
+Company ID: TORNTPHARM
+Company: Torrent Pharmaceuticals Ltd
+Year: Mar 2024
+Sector: Healthcare
+Metric: ROCE
+Source Value: 23.2
+Calculated Value: 32.3
+Difference: 9.10
+Category: formula discrepancy
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[53]
+Company ID: TRENT
+Company: Trent Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROCE
+Source Value: 23.8
+Calculated Value: 50.85
+Difference: 27.05
+Category: version difference
+Explanation: Computed ROCE differs from the source ROCE by more than 5 percentage points.
+
+[54]
+Company ID: TRENT
+Company: Trent Ltd
+Year: Mar 2024
+Sector: Consumer Discretionary
+Metric: ROE
+Source Value: 27.2
+Calculated Value: 36.31
+Difference: 9.11
+Category: formula discrepancy
+Explanation: Source ROE is retained for display only. Computed ROE should be used for analytics.
+
+======================================================================
+ANOMALY CATEGORY SUMMARY
+----------------------------------------------------------------------
+formula discrepancy: 24
+data source issue: 16
+version difference: 14
