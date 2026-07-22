@@ -1,0 +1,9 @@
+decision_rank,company_id,company_name,broad_sector,year,overall_rank,sector_rank,ranking_score,intelligence_score,assessment,decision_score,signal,confidence,strength_count,risk_count,reasons,portfolio_weight_pct
+1,HAL,Hindustan Aeronautics Ltd,Industrials,Mar 2024,2,1,79.12,89.12,Strong,82.84,Strong Candidate,High,7,0,Strong overall company intelligence; Strong multi-factor ranking score; Strong quality factor; Strong profitability factor,12.5
+2,TCS,Tata Consultancy Services Ltd,Information Technology,Mar 2024,14,1,65.92,75.92,Good,71.41,Candidate,High,7,0,Good overall company intelligence; Strong quality factor; Strong financial strength; Growth factor is relatively weak,12.5
+3,LTIM,LTIMindtree Ltd,Information Technology,Mar 2024,10,3,68.63,78.63,Good,71.37,Candidate,High,8,0,Good overall company intelligence; Strong quality factor,12.5
+4,ITC,ITC Ltd,Consumer Staples,Mar 2024,29,2,59.94,68.94,Good,66.12,Candidate,High,6,0,Good overall company intelligence; Strong profitability factor; Strong financial strength; Growth factor is relatively weak,12.5
+5,INFY,Infosys Ltd,Information Technology,Mar 2024,26,2,60.56,70.56,Good,65.23,Candidate,High,9,0,Good overall company intelligence; Strong financial strength,12.5
+6,HCLTECH,HCL Technologies Ltd,Information Technology,Mar 2024,49,4,51.63,61.63,Average,56.24,Watch,High,7,0,Strong financial strength; Growth factor is relatively weak,12.5
+7,MARUTI,Maruti Suzuki India Ltd,Consumer Discretionary,Mar 2024,53,9,47.65,57.65,Average,51.16,Watch,High,7,0,Below-average multi-factor ranking score; Strong financial strength; Growth factor is relatively weak,12.5
+8,RELIANCE,Reliance Industries Ltd,Energy,Mar 2024,74,9,35.65,39.65,Weak,35.12,Avoid,High,4,1,Weak overall company intelligence; Below-average multi-factor ranking score; Growth factor is relatively weak; Risk: Low return on equity,12.5

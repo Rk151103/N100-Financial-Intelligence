@@ -1,0 +1,724 @@
+"""
+N100 Financial Intelligence Platform
+Sprint 3 - Day 22
+Portfolio Intelligence Engine
+
+Provides portfolio-level analytics using the existing
+Decision Signal Engine.
+
+This module is for analytical purposes only and does not
+constitute investment advice.
+"""
+
+from pathlib import Path
+
+import pandas as pd
+
+from src.screener.decision_engine import DecisionSignalEngine
+
+
+BASE_DIR = Path(__file__).resolve().parents[2]
+DB_PATH = BASE_DIR / "db" / "nifty100.db"
+OUTPUT_DIR = BASE_DIR / "output"
+
+
+class PortfolioIntelligenceEngine:
+    """Analyse a portfolio of N100 companies."""
+
+    def __init__(self, db_path=DB_PATH):
+        self.db_path = Path(db_path)
+
+        self.decision_engine = DecisionSignalEngine(
+            db_path=self.db_path
+        )
+
+    # =========================================================
+    # Portfolio Analysis
+    # =========================================================
+
+    def analyse_portfolio(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        """
+        Analyse all companies in a portfolio.
+        """
+
+        df = self.decision_engine.analyse_companies(
+            company_ids,
+            year,
+            ignore_invalid=ignore_invalid,
+        ).copy()
+
+        if df.empty:
+            raise ValueError(
+                "Portfolio contains no valid companies."
+            )
+
+        # Equal-weight portfolio for Day 22.
+        df["portfolio_weight_pct"] = round(
+            100.0 / len(df),
+            2,
+        )
+
+        return df
+
+    # =========================================================
+    # Sector Allocation
+    # =========================================================
+
+    def sector_allocation(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        result = (
+            df.groupby(
+                "broad_sector",
+                dropna=False,
+            )
+            .size()
+            .reset_index(
+                name="company_count"
+            )
+        )
+
+        result["weight_pct"] = (
+            result["company_count"]
+            / len(df)
+            * 100
+        ).round(2)
+
+        return result.sort_values(
+            [
+                "weight_pct",
+                "broad_sector",
+            ],
+            ascending=[
+                False,
+                True,
+            ],
+        ).reset_index(
+            drop=True
+        )
+
+    # =========================================================
+    # Signal Distribution
+    # =========================================================
+
+    def signal_distribution(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        result = (
+            df["signal"]
+            .value_counts()
+            .rename_axis("signal")
+            .reset_index(
+                name="company_count"
+            )
+        )
+
+        result["weight_pct"] = (
+            result["company_count"]
+            / len(df)
+            * 100
+        ).round(2)
+
+        return result
+
+    # =========================================================
+    # Assessment Distribution
+    # =========================================================
+
+    def assessment_distribution(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        result = (
+            df["assessment"]
+            .value_counts()
+            .rename_axis("assessment")
+            .reset_index(
+                name="company_count"
+            )
+        )
+
+        result["weight_pct"] = (
+            result["company_count"]
+            / len(df)
+            * 100
+        ).round(2)
+
+        return result
+
+    # =========================================================
+    # Diversification
+    # =========================================================
+
+    def diversification_score(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        """
+        Calculate a simple 0-100 diversification score.
+
+        Components:
+        60% sector diversity
+        40% concentration control
+        """
+
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        sector_df = self.sector_allocation(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        company_count = len(df)
+        sector_count = len(sector_df)
+
+        if company_count == 0:
+            return 0.0
+
+        ideal_sector_count = min(
+            company_count,
+            8,
+        )
+
+        sector_diversity = min(
+            sector_count
+            / ideal_sector_count,
+            1.0,
+        ) * 100
+
+        max_sector_weight = float(
+            sector_df["weight_pct"].max()
+        )
+
+        concentration_score = max(
+            0.0,
+            100.0 - max_sector_weight,
+        )
+
+        score = (
+            sector_diversity * 0.60
+            + concentration_score * 0.40
+        )
+
+        return round(
+            min(100.0, max(0.0, score)),
+            2,
+        )
+
+    # =========================================================
+    # Concentration Risk
+    # =========================================================
+
+    def concentration_risk(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        sectors = self.sector_allocation(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        max_weight = float(
+            sectors["weight_pct"].max()
+        )
+
+        if max_weight >= 60:
+            return "High"
+
+        if max_weight >= 40:
+            return "Moderate"
+
+        return "Low"
+
+    # =========================================================
+    # Portfolio Intelligence Score
+    # =========================================================
+
+    def portfolio_score(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        """
+        Portfolio score:
+
+        Average intelligence score  40%
+        Average decision score      35%
+        Diversification score       25%
+        """
+
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        intelligence = pd.to_numeric(
+            df["intelligence_score"],
+            errors="coerce",
+        ).mean()
+
+        decision = pd.to_numeric(
+            df["decision_score"],
+            errors="coerce",
+        ).mean()
+
+        diversification = (
+            self.diversification_score(
+                company_ids,
+                year,
+                ignore_invalid,
+            )
+        )
+
+        values = [
+            (intelligence, 0.40),
+            (decision, 0.35),
+            (diversification, 0.25),
+        ]
+
+        available = [
+            (value, weight)
+            for value, weight in values
+            if pd.notna(value)
+        ]
+
+        if not available:
+            return None
+
+        total_weight = sum(
+            weight
+            for _, weight in available
+        )
+
+        score = sum(
+            value * weight
+            for value, weight in available
+        ) / total_weight
+
+        return round(
+            max(0.0, min(100.0, score)),
+            2,
+        )
+
+    # =========================================================
+    # Health Classification
+    # =========================================================
+
+    @staticmethod
+    def classify_health(score):
+        if score is None:
+            return "Insufficient Data"
+
+        if score >= 80:
+            return "Strong"
+
+        if score >= 65:
+            return "Healthy"
+
+        if score >= 50:
+            return "Moderate"
+
+        return "Weak"
+
+    # =========================================================
+    # Strongest / Weakest
+    # =========================================================
+
+    def strongest_holding(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        return df.sort_values(
+            "decision_score",
+            ascending=False,
+            na_position="last",
+        ).iloc[0].to_dict()
+
+    def weakest_holding(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        valid = df[
+            df["decision_score"].notna()
+        ]
+
+        if valid.empty:
+            return df.iloc[-1].to_dict()
+
+        return valid.sort_values(
+            "decision_score",
+            ascending=True,
+        ).iloc[0].to_dict()
+
+    # =========================================================
+    # Summary
+    # =========================================================
+
+    def portfolio_summary(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        sectors = self.sector_allocation(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        strongest = self.strongest_holding(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        weakest = self.weakest_holding(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        score = self.portfolio_score(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        diversification = (
+            self.diversification_score(
+                company_ids,
+                year,
+                ignore_invalid,
+            )
+        )
+
+        average_intelligence = round(
+            pd.to_numeric(
+                df["intelligence_score"],
+                errors="coerce",
+            ).mean(),
+            2,
+        )
+
+        average_decision = round(
+            pd.to_numeric(
+                df["decision_score"],
+                errors="coerce",
+            ).mean(),
+            2,
+        )
+
+        return {
+            "year": year,
+            "company_count": len(df),
+            "sector_count": len(sectors),
+            "portfolio_score": score,
+            "portfolio_health":
+                self.classify_health(score),
+            "average_intelligence_score":
+                average_intelligence,
+            "average_decision_score":
+                average_decision,
+            "diversification_score":
+                diversification,
+            "concentration_risk":
+                self.concentration_risk(
+                    company_ids,
+                    year,
+                    ignore_invalid,
+                ),
+            "largest_sector":
+                sectors.iloc[0][
+                    "broad_sector"
+                ],
+            "largest_sector_weight_pct":
+                float(
+                    sectors.iloc[0][
+                        "weight_pct"
+                    ]
+                ),
+            "strongest_company_id":
+                strongest["company_id"],
+            "strongest_company_name":
+                strongest["company_name"],
+            "strongest_decision_score":
+                strongest["decision_score"],
+            "weakest_company_id":
+                weakest["company_id"],
+            "weakest_company_name":
+                weakest["company_name"],
+            "weakest_decision_score":
+                weakest["decision_score"],
+            "invalid_companies":
+                df.attrs.get(
+                    "invalid_companies",
+                    [],
+                ),
+        }
+
+    # =========================================================
+    # Narrative
+    # =========================================================
+
+    def generate_summary(
+        self,
+        company_ids,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        summary = self.portfolio_summary(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        return (
+            f"The portfolio contains "
+            f"{summary['company_count']} companies "
+            f"across {summary['sector_count']} sectors "
+            f"for {summary['year']}. "
+            f"Its portfolio intelligence score is "
+            f"{summary['portfolio_score']}/100 and "
+            f"is classified as "
+            f"{summary['portfolio_health']}. "
+            f"The diversification score is "
+            f"{summary['diversification_score']}/100 "
+            f"with {summary['concentration_risk'].lower()} "
+            f"sector concentration risk. "
+            f"{summary['strongest_company_name']} is the "
+            f"strongest holding based on the analytical "
+            f"decision score, while "
+            f"{summary['weakest_company_name']} is the "
+            f"weakest."
+        )
+
+    # =========================================================
+    # CSV Export
+    # =========================================================
+
+    def export_csv(
+        self,
+        company_ids,
+        year="Mar 2024",
+        output_path=None,
+        ignore_invalid=False,
+    ):
+        df = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+        )
+
+        if output_path is None:
+            OUTPUT_DIR.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            output_path = (
+                OUTPUT_DIR
+                / "portfolio_intelligence.csv"
+            )
+        else:
+            output_path = Path(
+                output_path
+            )
+
+            output_path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+        df.to_csv(
+            output_path,
+            index=False,
+        )
+
+        return output_path
+
+
+def main():
+    print("=" * 72)
+    print("Sprint 3 - Day 22")
+    print("N100 Portfolio Intelligence Engine")
+    print("=" * 72)
+
+    engine = PortfolioIntelligenceEngine()
+
+    portfolio = [
+        "TCS",
+        "INFY",
+        "HCLTECH",
+        "LTIM",
+        "RELIANCE",
+        "ITC",
+        "MARUTI",
+        "HAL",
+    ]
+
+    year = "Mar 2024"
+
+    results = engine.analyse_portfolio(
+        portfolio,
+        year,
+    )
+
+    print(f"\nYear: {year}")
+    print(
+        f"Companies analysed: {len(results)}"
+    )
+
+    print("\nPortfolio Holdings")
+    print("-" * 72)
+
+    columns = [
+        "company_id",
+        "company_name",
+        "broad_sector",
+        "decision_score",
+        "signal",
+        "intelligence_score",
+        "portfolio_weight_pct",
+    ]
+
+    print(
+        results[columns].to_string(
+            index=False
+        )
+    )
+
+    print("\nSector Allocation")
+    print("-" * 72)
+
+    print(
+        engine.sector_allocation(
+            portfolio,
+            year,
+        ).to_string(
+            index=False
+        )
+    )
+
+    print("\nSignal Distribution")
+    print("-" * 72)
+
+    print(
+        engine.signal_distribution(
+            portfolio,
+            year,
+        ).to_string(
+            index=False
+        )
+    )
+
+    print("\nPortfolio Summary")
+    print("-" * 72)
+
+    summary = engine.portfolio_summary(
+        portfolio,
+        year,
+    )
+
+    for key, value in summary.items():
+        print(
+            f"{key:32}: {value}"
+        )
+
+    print("\nNarrative")
+    print("-" * 72)
+
+    print(
+        engine.generate_summary(
+            portfolio,
+            year,
+        )
+    )
+
+    output_path = engine.export_csv(
+        portfolio,
+        year,
+    )
+
+    print(
+        f"\nCSV generated:\n{output_path}"
+    )
+
+    print(
+        "\nDay 22 portfolio intelligence "
+        "analysis completed successfully."
+    )
+
+    print(
+        "\nNote: Portfolio intelligence outputs "
+        "are analytical model signals, not "
+        "investment advice."
+    )
+
+
+if __name__ == "__main__":
+    main()
