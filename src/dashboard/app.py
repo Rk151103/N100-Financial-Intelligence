@@ -1135,6 +1135,12 @@ elif dashboard_view == "Portfolio Intelligence":
     # Portfolio Configuration
     # -----------------------------------------------------
 
+    # -----------------------------------------------------
+    # Interactive Portfolio Builder
+    # -----------------------------------------------------
+
+    st.subheader("Build Your Portfolio")
+
     default_portfolio = [
         "HAL",
         "TCS",
@@ -1146,39 +1152,96 @@ elif dashboard_view == "Portfolio Intelligence":
         "RELIANCE",
     ]
 
+    # Create Company Name -> Company ID mapping
+    portfolio_company_df = (
+        company_df[
+            ["company_id", "company_name", "broad_sector"]
+        ]
+        .dropna(subset=["company_id", "company_name"])
+        .drop_duplicates(subset=["company_id"])
+        .sort_values("company_name")
+    )
+
+    company_name_to_id = dict(
+        zip(
+            portfolio_company_df["company_name"],
+            portfolio_company_df["company_id"],
+        )
+    )
+
+    company_id_to_name = dict(
+        zip(
+            portfolio_company_df["company_id"],
+            portfolio_company_df["company_name"],
+        )
+    )
+
+    # Convert default IDs to company names
+    default_company_names = [
+        company_id_to_name[company_id]
+        for company_id in default_portfolio
+        if company_id in company_id_to_name
+    ]
+
+    selected_company_names = st.multiselect(
+        "Select Portfolio Companies",
+        options=portfolio_company_df["company_name"].tolist(),
+        default=default_company_names,
+        help=(
+            "Select companies to analyse. Portfolio intelligence, "
+            "risk and recommendations update automatically."
+        ),
+    )
+
+    # Convert selected names back to IDs required by engines
+    selected_portfolio = [
+        company_name_to_id[name]
+        for name in selected_company_names
+    ]
+
     portfolio_year = "Mar 2024"
+
+    st.caption(
+        f"Selected holdings: {len(selected_portfolio)}"
+    )
+
+    if not selected_portfolio:
+        st.warning(
+            "Select at least one company to generate portfolio intelligence."
+        )
+        st.stop()
 
     try:
         portfolio_engine = PortfolioIntelligenceEngine()
         recommendation_engine = PortfolioRecommendationEngine()
 
         portfolio_df = portfolio_engine.analyse_portfolio(
-            default_portfolio,
+            selected_portfolio,
             year=portfolio_year,
             ignore_invalid=False,
         )
 
         portfolio_summary = portfolio_engine.portfolio_summary(
-            default_portfolio,
+            selected_portfolio,
             year=portfolio_year,
             ignore_invalid=False,
         )
 
         sector_allocation_df = portfolio_engine.sector_allocation(
-            default_portfolio,
+            selected_portfolio,
             year=portfolio_year,
             ignore_invalid=False,
         )
 
         signal_distribution_df = portfolio_engine.signal_distribution(
-            default_portfolio,
+            selected_portfolio,
             year=portfolio_year,
             ignore_invalid=False,
         )
 
         holding_recommendations_df = (
             recommendation_engine.holding_recommendations(
-                default_portfolio,
+                selected_portfolio,
                 year=portfolio_year,
                 ignore_invalid=False,
             )
@@ -1186,7 +1249,7 @@ elif dashboard_view == "Portfolio Intelligence":
 
         sector_risk_df = (
             recommendation_engine.sector_risk_analysis(
-                default_portfolio,
+                selected_portfolio,
                 year=portfolio_year,
                 ignore_invalid=False,
             )
@@ -1194,7 +1257,7 @@ elif dashboard_view == "Portfolio Intelligence":
 
         recommendations = (
             recommendation_engine.portfolio_recommendations(
-                default_portfolio,
+                selected_portfolio,
                 year=portfolio_year,
                 ignore_invalid=False,
             )
@@ -1202,7 +1265,7 @@ elif dashboard_view == "Portfolio Intelligence":
 
         recommendation_summary = (
             recommendation_engine.recommendation_summary(
-                default_portfolio,
+                selected_portfolio,
                 year=portfolio_year,
                 ignore_invalid=False,
             )
