@@ -28,6 +28,8 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.reports.company_report import CompanyReportGenerator
 from src.reports.sector_report import SectorReportGenerator
+from src.screener.portfolio_intelligence import PortfolioIntelligenceEngine
+from src.screener.portfolio_recommendations import PortfolioRecommendationEngine
 
 
 # =========================================================
@@ -157,6 +159,7 @@ dashboard_view = st.sidebar.radio(
     [
         "Company Intelligence",
         "Sector Intelligence",
+        "Portfolio Intelligence",
     ],
 )
 
@@ -678,7 +681,7 @@ if dashboard_view == "Company Intelligence":
 # SECTOR INTELLIGENCE
 # =========================================================
 
-else:
+elif dashboard_view == "Sector Intelligence":
 
     st.sidebar.header("Sector Filters")
 
@@ -1114,6 +1117,441 @@ else:
     )
 
 
+# =========================================================
+# =========================================================
+# PORTFOLIO INTELLIGENCE
+# =========================================================
+
+elif dashboard_view == "Portfolio Intelligence":
+
+    st.header("Portfolio Intelligence")
+
+    st.caption(
+        "Portfolio-level financial intelligence, decision signals, "
+        "sector concentration, risk analysis and recommendations."
+    )
+
+    # -----------------------------------------------------
+    # Portfolio Configuration
+    # -----------------------------------------------------
+
+    default_portfolio = [
+        "HAL",
+        "TCS",
+        "LTIM",
+        "ITC",
+        "INFY",
+        "HCLTECH",
+        "MARUTI",
+        "RELIANCE",
+    ]
+
+    portfolio_year = "Mar 2024"
+
+    try:
+        portfolio_engine = PortfolioIntelligenceEngine()
+        recommendation_engine = PortfolioRecommendationEngine()
+
+        portfolio_df = portfolio_engine.analyse_portfolio(
+            default_portfolio,
+            year=portfolio_year,
+            ignore_invalid=False,
+        )
+
+        portfolio_summary = portfolio_engine.portfolio_summary(
+            default_portfolio,
+            year=portfolio_year,
+            ignore_invalid=False,
+        )
+
+        sector_allocation_df = portfolio_engine.sector_allocation(
+            default_portfolio,
+            year=portfolio_year,
+            ignore_invalid=False,
+        )
+
+        signal_distribution_df = portfolio_engine.signal_distribution(
+            default_portfolio,
+            year=portfolio_year,
+            ignore_invalid=False,
+        )
+
+        holding_recommendations_df = (
+            recommendation_engine.holding_recommendations(
+                default_portfolio,
+                year=portfolio_year,
+                ignore_invalid=False,
+            )
+        )
+
+        sector_risk_df = (
+            recommendation_engine.sector_risk_analysis(
+                default_portfolio,
+                year=portfolio_year,
+                ignore_invalid=False,
+            )
+        )
+
+        recommendations = (
+            recommendation_engine.portfolio_recommendations(
+                default_portfolio,
+                year=portfolio_year,
+                ignore_invalid=False,
+            )
+        )
+
+        recommendation_summary = (
+            recommendation_engine.recommendation_summary(
+                default_portfolio,
+                year=portfolio_year,
+                ignore_invalid=False,
+            )
+        )
+
+    except Exception as exc:
+        st.error(
+            f"Unable to load portfolio intelligence: {exc}"
+        )
+        st.stop()
+
+    # -----------------------------------------------------
+    # Portfolio Overview
+    # -----------------------------------------------------
+
+    st.subheader("Portfolio Overview")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "Portfolio Score",
+            f"{portfolio_summary['portfolio_score']:.2f} / 100",
+        )
+
+    with col2:
+        st.metric(
+            "Portfolio Health",
+            portfolio_summary["portfolio_health"],
+        )
+
+    with col3:
+        st.metric(
+            "Diversification",
+            f"{portfolio_summary['diversification_score']:.2f} / 100",
+        )
+
+    with col4:
+        st.metric(
+            "Companies",
+            portfolio_summary["company_count"],
+        )
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "Average Intelligence",
+            f"{portfolio_summary['average_intelligence_score']:.2f}",
+        )
+
+    with col2:
+        st.metric(
+            "Average Decision Score",
+            f"{portfolio_summary['average_decision_score']:.2f}",
+        )
+
+    with col3:
+        st.metric(
+            "Sectors",
+            portfolio_summary["sector_count"],
+        )
+
+    with col4:
+        st.metric(
+            "Concentration Risk",
+            portfolio_summary["concentration_risk"],
+        )
+
+    # -----------------------------------------------------
+    # Portfolio Holdings
+    # -----------------------------------------------------
+
+    st.subheader("Portfolio Holdings")
+
+    holding_columns = [
+        "company_id",
+        "company_name",
+        "broad_sector",
+        "overall_rank",
+        "sector_rank",
+        "intelligence_score",
+        "decision_score",
+        "signal",
+        "portfolio_weight_pct",
+    ]
+
+    holding_columns = [
+        column
+        for column in holding_columns
+        if column in portfolio_df.columns
+    ]
+
+    st.dataframe(
+        portfolio_df[holding_columns],
+        width="stretch",
+        hide_index=True,
+    )
+
+    # -----------------------------------------------------
+    # Strongest and Weakest Holdings
+    # -----------------------------------------------------
+
+    st.subheader("Holding Intelligence")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.success(
+            f"""
+**Strongest Holding**
+
+{portfolio_summary['strongest_company_name']}
+
+Decision Score: {portfolio_summary['strongest_decision_score']:.2f}
+"""
+        )
+
+    with col2:
+        st.warning(
+            f"""
+**Weakest Holding**
+
+{portfolio_summary['weakest_company_name']}
+
+Decision Score: {portfolio_summary['weakest_decision_score']:.2f}
+"""
+        )
+
+    # -----------------------------------------------------
+    # Sector Allocation
+    # -----------------------------------------------------
+
+    st.subheader("Sector Allocation")
+
+    sector_col1, sector_col2 = st.columns([1, 2])
+
+    with sector_col1:
+        st.dataframe(
+            sector_allocation_df,
+            width="stretch",
+            hide_index=True,
+        )
+
+    with sector_col2:
+
+        if (
+            not sector_allocation_df.empty
+            and "broad_sector" in sector_allocation_df.columns
+            and "weight_pct" in sector_allocation_df.columns
+        ):
+            sector_chart = sector_allocation_df.set_index(
+                "broad_sector"
+            )[["weight_pct"]]
+
+            st.bar_chart(sector_chart)
+
+    # -----------------------------------------------------
+    # Decision Signal Distribution
+    # -----------------------------------------------------
+
+    st.subheader("Decision Signal Distribution")
+
+    signal_col1, signal_col2 = st.columns([1, 2])
+
+    with signal_col1:
+        st.dataframe(
+            signal_distribution_df,
+            width="stretch",
+            hide_index=True,
+        )
+
+    with signal_col2:
+
+        if (
+            not signal_distribution_df.empty
+            and "signal" in signal_distribution_df.columns
+            and "company_count" in signal_distribution_df.columns
+        ):
+            signal_chart = signal_distribution_df.set_index(
+                "signal"
+            )[["company_count"]]
+
+            st.bar_chart(signal_chart)
+
+    # -----------------------------------------------------
+    # Holding Recommendations
+    # -----------------------------------------------------
+
+    st.subheader("Holding Recommendations")
+
+    recommendation_columns = [
+        "recommendation_rank",
+        "company_id",
+        "company_name",
+        "decision_score",
+        "signal",
+        "recommended_action",
+        "priority",
+    ]
+
+    recommendation_columns = [
+        column
+        for column in recommendation_columns
+        if column in holding_recommendations_df.columns
+    ]
+
+    st.dataframe(
+        holding_recommendations_df[
+            recommendation_columns
+        ],
+        width="stretch",
+        hide_index=True,
+    )
+
+    # -----------------------------------------------------
+    # Recommendation Summary
+    # -----------------------------------------------------
+
+    st.subheader("Recommendation Summary")
+
+    col1, col2, col3, col4 = st.columns(4)
+
+    with col1:
+        st.metric(
+            "Maintain",
+            recommendation_summary["maintain_count"],
+        )
+
+    with col2:
+        st.metric(
+            "Review",
+            recommendation_summary["review_count"],
+        )
+
+    with col3:
+        st.metric(
+            "Reduce Exposure",
+            recommendation_summary["reduce_exposure_count"],
+        )
+
+    with col4:
+        st.metric(
+            "High Priority",
+            recommendation_summary["high_priority_count"],
+        )
+
+    # -----------------------------------------------------
+    # Sector Risk
+    # -----------------------------------------------------
+
+    st.subheader("Sector Risk Analysis")
+
+    st.dataframe(
+        sector_risk_df,
+        width="stretch",
+        hide_index=True,
+    )
+
+    # -----------------------------------------------------
+    # Portfolio Recommendations
+    # -----------------------------------------------------
+
+    st.subheader("Portfolio Recommendations")
+
+    if recommendations:
+        for number, recommendation in enumerate(
+            recommendations,
+            start=1,
+        ):
+            st.write(
+                f"{number}. {recommendation}"
+            )
+    else:
+        st.info(
+            "No portfolio recommendations were generated."
+        )
+
+    # -----------------------------------------------------
+    # Portfolio Assessment
+    # -----------------------------------------------------
+
+    st.subheader("Portfolio Assessment")
+
+    st.write(
+        f"The portfolio contains "
+        f"{portfolio_summary['company_count']} companies across "
+        f"{portfolio_summary['sector_count']} sectors for "
+        f"{portfolio_year}. Its portfolio intelligence score is "
+        f"{portfolio_summary['portfolio_score']:.2f}/100 and is "
+        f"classified as "
+        f"{portfolio_summary['portfolio_health']}. "
+        f"The diversification score is "
+        f"{portfolio_summary['diversification_score']:.2f}/100. "
+        f"{portfolio_summary['largest_sector']} is the largest "
+        f"sector exposure at "
+        f"{portfolio_summary['largest_sector_weight_pct']:.1f}%."
+    )
+
+    st.write(
+        f"Strongest holding: "
+        f"**{portfolio_summary['strongest_company_name']}** "
+        f"with a decision score of "
+        f"{portfolio_summary['strongest_decision_score']:.2f}."
+    )
+
+    st.write(
+        f"Weakest holding: "
+        f"**{portfolio_summary['weakest_company_name']}** "
+        f"with a decision score of "
+        f"{portfolio_summary['weakest_decision_score']:.2f}."
+    )
+
+    st.info(
+        "Portfolio intelligence and recommendations are analytical "
+        "model outputs and are not investment advice."
+    )
+
+    # -----------------------------------------------------
+    # Export
+    # -----------------------------------------------------
+
+    st.subheader("Export")
+
+    portfolio_csv = (
+        portfolio_df
+        .to_csv(index=False)
+        .encode("utf-8")
+    )
+
+    st.download_button(
+        "Download Portfolio Intelligence",
+        data=portfolio_csv,
+        file_name="n100_portfolio_intelligence.csv",
+        mime="text/csv",
+    )
+
+    recommendation_csv = (
+        holding_recommendations_df
+        .to_csv(index=False)
+        .encode("utf-8")
+    )
+
+    st.download_button(
+        "Download Portfolio Recommendations",
+        data=recommendation_csv,
+        file_name="n100_portfolio_recommendations.csv",
+        mime="text/csv",
+    )
 # =========================================================
 # Footer
 # =========================================================
