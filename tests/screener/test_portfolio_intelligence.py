@@ -854,3 +854,92 @@ def test_custom_weight_export_csv(
 
     assert weights["HAL"] == 70.0
     assert weights["TCS"] == 30.0
+
+
+# ============================================================
+# Day 27 - Portfolio Scenario Analysis
+# ============================================================
+
+
+def test_compare_scenarios(engine):
+    result = engine.compare_scenarios(
+        ["HAL", "TCS"],
+        {"HAL": 70, "TCS": 30},
+        {"HAL": 50, "TCS": 50},
+        YEAR,
+    )
+
+    assert result["current_portfolio_score"] == 79.86
+    assert result["proposed_portfolio_score"] == 80.0
+    assert result["portfolio_score_change"] == 0.14
+
+
+def test_scenario_diversification_change(engine):
+    result = engine.compare_scenarios(
+        ["HAL", "TCS"],
+        {"HAL": 70, "TCS": 30},
+        {"HAL": 50, "TCS": 50},
+        YEAR,
+    )
+
+    assert result["current_diversification_score"] == 72.0
+    assert result["proposed_diversification_score"] == 80.0
+    assert result["diversification_change"] == 8.0
+
+
+def test_scenario_concentration_risk_change(engine):
+    result = engine.compare_scenarios(
+        ["HAL", "TCS"],
+        {"HAL": 70, "TCS": 30},
+        {"HAL": 50, "TCS": 50},
+        YEAR,
+    )
+
+    assert result["current_concentration_risk"] == "High"
+    assert result["proposed_concentration_risk"] == "Moderate"
+
+
+def test_scenario_largest_sector_weight_change(engine):
+    result = engine.compare_scenarios(
+        ["HAL", "TCS"],
+        {"HAL": 70, "TCS": 30},
+        {"HAL": 50, "TCS": 50},
+        YEAR,
+    )
+
+    assert result["current_largest_sector_weight_pct"] == 70.0
+    assert result["proposed_largest_sector_weight_pct"] == 50.0
+    assert result["largest_sector_weight_change"] == -20.0
+
+
+def test_identical_scenarios_have_zero_change(engine):
+    weights = {
+        "HAL": 70,
+        "TCS": 30,
+    }
+
+    result = engine.compare_scenarios(
+        ["HAL", "TCS"],
+        weights,
+        weights,
+        YEAR,
+    )
+
+    assert result["portfolio_score_change"] == 0.0
+    assert result["diversification_change"] == 0.0
+    assert result["average_intelligence_change"] == 0.0
+    assert result["average_decision_change"] == 0.0
+    assert result["largest_sector_weight_change"] == 0.0
+
+
+def test_scenario_contains_underlying_summaries(engine):
+    result = engine.compare_scenarios(
+        ["HAL", "TCS"],
+        {"HAL": 70, "TCS": 30},
+        {"HAL": 50, "TCS": 50},
+        YEAR,
+    )
+
+    assert "current_summary" in result
+    assert "proposed_summary" in result
+    assert result["company_count"] == 2

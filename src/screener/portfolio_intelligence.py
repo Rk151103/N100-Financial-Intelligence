@@ -647,6 +647,110 @@ class PortfolioIntelligenceEngine:
         )
 
     # =========================================================
+    # Day 27 - Portfolio Scenario Analysis
+    # =========================================================
+
+    def compare_scenarios(
+        self,
+        company_ids,
+        current_weights,
+        proposed_weights,
+        year="Mar 2024",
+        ignore_invalid=False,
+    ):
+        """Compare current and proposed portfolio allocations."""
+
+        current = self.portfolio_summary(
+            company_ids,
+            year,
+            ignore_invalid,
+            weights=current_weights,
+        )
+
+        proposed = self.portfolio_summary(
+            company_ids,
+            year,
+            ignore_invalid,
+            weights=proposed_weights,
+        )
+
+        def change(key):
+            current_value = current.get(key)
+            proposed_value = proposed.get(key)
+
+            if (
+                current_value is None
+                or proposed_value is None
+                or pd.isna(current_value)
+                or pd.isna(proposed_value)
+            ):
+                return None
+
+            return round(
+                float(proposed_value)
+                - float(current_value),
+                2,
+            )
+
+        return {
+            "year": year,
+            "company_count": proposed["company_count"],
+
+            "current_portfolio_score":
+                current["portfolio_score"],
+            "proposed_portfolio_score":
+                proposed["portfolio_score"],
+            "portfolio_score_change":
+                change("portfolio_score"),
+
+            "current_portfolio_health":
+                current["portfolio_health"],
+            "proposed_portfolio_health":
+                proposed["portfolio_health"],
+
+            "current_diversification_score":
+                current["diversification_score"],
+            "proposed_diversification_score":
+                proposed["diversification_score"],
+            "diversification_change":
+                change("diversification_score"),
+
+            "current_average_intelligence_score":
+                current["average_intelligence_score"],
+            "proposed_average_intelligence_score":
+                proposed["average_intelligence_score"],
+            "average_intelligence_change":
+                change("average_intelligence_score"),
+
+            "current_average_decision_score":
+                current["average_decision_score"],
+            "proposed_average_decision_score":
+                proposed["average_decision_score"],
+            "average_decision_change":
+                change("average_decision_score"),
+
+            "current_concentration_risk":
+                current["concentration_risk"],
+            "proposed_concentration_risk":
+                proposed["concentration_risk"],
+
+            "current_largest_sector":
+                current["largest_sector"],
+            "proposed_largest_sector":
+                proposed["largest_sector"],
+
+            "current_largest_sector_weight_pct":
+                current["largest_sector_weight_pct"],
+            "proposed_largest_sector_weight_pct":
+                proposed["largest_sector_weight_pct"],
+            "largest_sector_weight_change":
+                change("largest_sector_weight_pct"),
+
+            "current_summary": current,
+            "proposed_summary": proposed,
+        }
+
+    # =========================================================
     # CSV Export
     # =========================================================
 

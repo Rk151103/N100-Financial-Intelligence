@@ -1412,6 +1412,166 @@ elif dashboard_view == "Portfolio Intelligence":
         )
 
     # -----------------------------------------------------
+    # Day 27 - What-If Scenario Analysis
+    # -----------------------------------------------------
+
+    st.subheader("What-If Scenario Analysis")
+
+    st.caption(
+        "Compare the current portfolio allocation with a "
+        "proposed allocation without changing the active portfolio."
+    )
+
+    with st.expander(
+        "Build Proposed Portfolio Scenario",
+        expanded=False,
+    ):
+        proposed_weights = {}
+
+        current_weight_lookup = dict(
+            zip(
+                portfolio_df["company_id"],
+                portfolio_df["portfolio_weight_pct"],
+            )
+        )
+
+        for company_name in selected_company_names:
+            company_id = company_name_to_id[
+                company_name
+            ]
+
+            proposed_weights[company_id] = (
+                st.number_input(
+                    company_name,
+                    min_value=0.0,
+                    max_value=100.0,
+                    value=float(
+                        current_weight_lookup.get(
+                            company_id,
+                            0.0,
+                        )
+                    ),
+                    step=1.0,
+                    format="%.2f",
+                    key=f"scenario_weight_{company_id}",
+                )
+            )
+
+        proposed_total = round(
+            sum(proposed_weights.values()),
+            2,
+        )
+
+        st.metric(
+            "Proposed Portfolio Weight",
+            f"{proposed_total:.2f}%",
+        )
+
+        if abs(proposed_total - 100.0) > 0.01:
+            st.warning(
+                "Proposed portfolio weights must total 100%. "
+                f"Current total: {proposed_total:.2f}%"
+            )
+
+        else:
+            try:
+                scenario = portfolio_engine.compare_scenarios(
+                    selected_portfolio,
+                    current_weights=portfolio_weights,
+                    proposed_weights=proposed_weights,
+                    year=portfolio_year,
+                    ignore_invalid=False,
+                )
+
+                st.markdown("#### Current vs Proposed")
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric(
+                        "Portfolio Score",
+                        (
+                            f"{scenario['proposed_portfolio_score']:.2f}"
+                        ),
+                        delta=(
+                            f"{scenario['portfolio_score_change']:+.2f}"
+                        ),
+                    )
+
+                with col2:
+                    st.metric(
+                        "Diversification",
+                        (
+                            f"{scenario['proposed_diversification_score']:.2f}"
+                        ),
+                        delta=(
+                            f"{scenario['diversification_change']:+.2f}"
+                        ),
+                    )
+
+                with col3:
+                    st.metric(
+                        "Average Decision Score",
+                        (
+                            f"{scenario['proposed_average_decision_score']:.2f}"
+                        ),
+                        delta=(
+                            f"{scenario['average_decision_change']:+.2f}"
+                        ),
+                    )
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric(
+                        "Average Intelligence",
+                        (
+                            f"{scenario['proposed_average_intelligence_score']:.2f}"
+                        ),
+                        delta=(
+                            f"{scenario['average_intelligence_change']:+.2f}"
+                        ),
+                    )
+
+                with col2:
+                    st.metric(
+                        "Concentration Risk",
+                        scenario["proposed_concentration_risk"],
+                    )
+
+                    st.caption(
+                        "Current: "
+                        f"{scenario['current_concentration_risk']}"
+                    )
+
+                with col3:
+                    st.metric(
+                        "Largest Sector Exposure",
+                        (
+                            f"{scenario['proposed_largest_sector_weight_pct']:.2f}%"
+                        ),
+                        delta=(
+                            f"{scenario['largest_sector_weight_change']:+.2f}%"
+                        ),
+                        delta_color="inverse",
+                    )
+
+                    st.caption(
+                        "Proposed largest sector: "
+                        f"{scenario['proposed_largest_sector']}"
+                    )
+
+                st.caption(
+                    "Scenario results are analytical simulations "
+                    "and do not constitute investment advice."
+                )
+
+            except Exception as exc:
+                st.error(
+                    f"Unable to analyse proposed scenario: {exc}"
+                )
+
+    # -----------------------------------------------------
     # Portfolio Holdings
     # -----------------------------------------------------
 
