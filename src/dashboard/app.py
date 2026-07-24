@@ -1631,55 +1631,39 @@ elif dashboard_view == "Portfolio Intelligence":
 
                 st.markdown("#### Recommended Allocation")
 
-                recommended_weights = (
-                    rebalance_result["recommended_weights"]
-                )
-
-                rebalance_rows = []
-
-                current_weights_display = dict(
-                    zip(
-                        portfolio_df["company_id"],
-                        portfolio_df["portfolio_weight_pct"],
+                rebalancing_plan = (
+                    portfolio_engine.generate_rebalancing_plan(
+                        selected_portfolio,
+                        current_weights=portfolio_weights,
+                        year=portfolio_year,
+                        ignore_invalid=False,
+                        step=rebalance_step,
+                        max_weight=rebalance_max_weight,
                     )
                 )
 
-                for company_id in selected_portfolio:
-                    current_weight = float(
-                        current_weights_display.get(
-                            company_id,
-                            0.0,
-                        )
-                    )
-
-                    recommended_weight = float(
-                        recommended_weights.get(
-                            company_id,
-                            0.0,
-                        )
-                    )
-
-                    rebalance_rows.append(
-                        {
-                            "Company": company_id_to_name.get(
-                                company_id,
-                                company_id,
-                            ),
-                            "Current Weight (%)": current_weight,
-                            "Recommended Weight (%)": recommended_weight,
-                            "Change (%)": round(
-                                recommended_weight - current_weight,
-                                2,
-                            ),
-                        }
-                    )
-
-                rebalance_df = pd.DataFrame(
-                    rebalance_rows
+                display_plan = rebalancing_plan.rename(
+                    columns={
+                        "company_name": "Company",
+                        "current_weight_pct": "Current Weight (%)",
+                        "recommended_weight_pct": (
+                            "Recommended Weight (%)"
+                        ),
+                        "weight_change_pct": "Change (%)",
+                        "action": "Action",
+                    }
                 )
+
+                display_columns = [
+                    "Company",
+                    "Current Weight (%)",
+                    "Recommended Weight (%)",
+                    "Change (%)",
+                    "Action",
+                ]
 
                 st.dataframe(
-                    rebalance_df,
+                    display_plan[display_columns],
                     width="stretch",
                     hide_index=True,
                 )

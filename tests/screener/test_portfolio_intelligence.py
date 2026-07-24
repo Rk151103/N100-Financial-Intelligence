@@ -1168,3 +1168,143 @@ def test_rebalancing_does_not_mutate_current_weights(engine):
     )
 
     assert current_weights == original
+# =========================================================
+# Day 29 - Portfolio Rebalancing Plan Tests
+# =========================================================
+
+
+def test_generate_rebalancing_plan():
+    engine = PortfolioIntelligenceEngine()
+
+    plan = engine.generate_rebalancing_plan(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert len(plan) == 2
+
+    assert {
+        "company_id",
+        "company_name",
+        "current_weight_pct",
+        "recommended_weight_pct",
+        "weight_change_pct",
+        "action",
+    }.issubset(plan.columns)
+
+
+def test_rebalancing_plan_weights_total_100():
+    engine = PortfolioIntelligenceEngine()
+
+    plan = engine.generate_rebalancing_plan(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert round(
+        plan["recommended_weight_pct"].sum(),
+        2,
+    ) == 100.0
+
+
+def test_rebalancing_plan_contains_reduce_action():
+    engine = PortfolioIntelligenceEngine()
+
+    plan = engine.generate_rebalancing_plan(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    hal = plan[
+        plan["company_id"] == "HAL"
+    ].iloc[0]
+
+    assert hal["current_weight_pct"] == 70.0
+    assert hal["recommended_weight_pct"] == 50.0
+    assert hal["weight_change_pct"] == -20.0
+    assert hal["action"] == "Reduce"
+
+
+def test_rebalancing_plan_contains_increase_action():
+    engine = PortfolioIntelligenceEngine()
+
+    plan = engine.generate_rebalancing_plan(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    tcs = plan[
+        plan["company_id"] == "TCS"
+    ].iloc[0]
+
+    assert tcs["current_weight_pct"] == 30.0
+    assert tcs["recommended_weight_pct"] == 50.0
+    assert tcs["weight_change_pct"] == 20.0
+    assert tcs["action"] == "Increase"
+
+
+def test_rebalancing_plan_contains_result_metadata():
+    engine = PortfolioIntelligenceEngine()
+
+    plan = engine.generate_rebalancing_plan(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert "rebalancing_result" in plan.attrs
+
+    result = plan.attrs[
+        "rebalancing_result"
+    ]
+
+    assert result[
+        "recommended_weights"
+    ] == {
+        "HAL": 50,
+        "TCS": 50,
+    }
+
+
+def test_rebalancing_plan_does_not_mutate_weights():
+    engine = PortfolioIntelligenceEngine()
+
+    weights = {
+        "HAL": 70,
+        "TCS": 30,
+    }
+
+    original = weights.copy()
+
+    engine.generate_rebalancing_plan(
+        ["HAL", "TCS"],
+        current_weights=weights,
+        step=10,
+        max_weight=60,
+    )
+
+    assert weights == original

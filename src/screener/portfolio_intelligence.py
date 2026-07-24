@@ -1112,6 +1112,136 @@ class PortfolioIntelligenceEngine:
         }
 
     # =========================================================
+    # Day 29 - Portfolio Rebalancing Plan
+    # =========================================================
+
+    def generate_rebalancing_plan(
+        self,
+        company_ids,
+        current_weights=None,
+        year="Mar 2024",
+        ignore_invalid=False,
+        step=5,
+        max_weight=40,
+    ):
+        """Generate holding-level actions for portfolio rebalancing."""
+
+        result = self.suggest_rebalanced_weights(
+            company_ids,
+            current_weights=current_weights,
+            year=year,
+            ignore_invalid=ignore_invalid,
+            step=step,
+            max_weight=max_weight,
+        )
+
+        current = result["current_weights"]
+        recommended = result["recommended_weights"]
+
+        portfolio = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+            weights=current,
+        )
+
+        company_names = dict(
+            zip(
+                portfolio["company_id"],
+                portfolio["company_name"],
+            )
+        )
+
+        rows = []
+
+        for company_id in current:
+            current_weight = float(
+                current.get(company_id, 0.0)
+            )
+
+            recommended_weight = float(
+                recommended.get(company_id, 0.0)
+            )
+
+            weight_change = round(
+                recommended_weight - current_weight,
+                2,
+            )
+
+            if weight_change > 0:
+                action = "Increase"
+            elif weight_change < 0:
+                action = "Reduce"
+            else:
+                action = "Maintain"
+
+            rows.append(
+                {
+                    "company_id": company_id,
+                    "company_name": company_names.get(
+                        company_id,
+                        company_id,
+                    ),
+                    "current_weight_pct": round(
+                        current_weight,
+                        2,
+                    ),
+                    "recommended_weight_pct": round(
+                        recommended_weight,
+                        2,
+                    ),
+                    "weight_change_pct": weight_change,
+                    "action": action,
+                }
+            )
+
+        plan = pd.DataFrame(rows)
+
+        if not plan.empty:
+            action_order = {
+                "Reduce": 1,
+                "Increase": 2,
+                "Maintain": 3,
+            }
+
+            plan["_action_order"] = (
+                plan["action"]
+                .map(action_order)
+                .fillna(4)
+            )
+
+            plan["_change_size"] = (
+                plan["weight_change_pct"]
+                .abs()
+            )
+
+            plan = (
+                plan.sort_values(
+                    by=[
+                        "_action_order",
+                        "_change_size",
+                        "company_name",
+                    ],
+                    ascending=[
+                        True,
+                        False,
+                        True,
+                    ],
+                )
+                .drop(
+                    columns=[
+                        "_action_order",
+                        "_change_size",
+                    ]
+                )
+                .reset_index(drop=True)
+            )
+
+        plan.attrs["rebalancing_result"] = result
+
+        return plan
+
+    # =========================================================
     # CSV Export
     # =========================================================
 
