@@ -943,3 +943,228 @@ def test_scenario_contains_underlying_summaries(engine):
     assert "current_summary" in result
     assert "proposed_summary" in result
     assert result["company_count"] == 2
+
+
+
+# ============================================================
+# Day 28 - Portfolio Rebalancing
+# ============================================================
+
+
+def test_rebalancing_recommends_valid_weights(engine):
+    result = engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    weights = result["recommended_weights"]
+
+    assert set(weights) == {"HAL", "TCS"}
+    assert round(sum(weights.values()), 2) == 100.0
+
+
+def test_rebalancing_expected_hal_tcs_allocation(engine):
+    result = engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert result["recommended_weights"] == {
+        "HAL": 50,
+        "TCS": 50,
+    }
+
+
+def test_rebalancing_improves_portfolio_score(engine):
+    result = engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert (
+        result["recommended_portfolio_score"]
+        >= result["current_portfolio_score"]
+    )
+
+    assert result["portfolio_score_change"] == 0.14
+
+
+def test_rebalancing_improves_diversification(engine):
+    result = engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert (
+        result["recommended_diversification_score"]
+        >= result["current_diversification_score"]
+    )
+
+    assert result["diversification_change"] == 8.0
+
+
+def test_rebalancing_reduces_concentration(engine):
+    result = engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert (
+        result["current_concentration_risk"]
+        == "High"
+    )
+
+    assert (
+        result["recommended_concentration_risk"]
+        == "Moderate"
+    )
+
+    assert (
+        result["recommended_largest_sector_weight_pct"]
+        < result["current_largest_sector_weight_pct"]
+    )
+
+    assert (
+        result["largest_sector_weight_change"]
+        == -20.0
+    )
+
+
+def test_rebalancing_respects_max_weight(engine):
+    result = engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert all(
+        weight <= 60
+        for weight
+        in result["recommended_weights"].values()
+    )
+
+
+def test_rebalancing_contains_summary(engine):
+    result = engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert "recommended_summary" in result
+
+    assert (
+        result["recommended_summary"]["portfolio_score"]
+        == result["recommended_portfolio_score"]
+    )
+
+
+def test_rebalancing_invalid_step_rejected(engine):
+    with pytest.raises(ValueError):
+        engine.suggest_rebalanced_weights(
+            ["HAL", "TCS"],
+            current_weights={
+                "HAL": 70,
+                "TCS": 30,
+            },
+            step=0,
+        )
+
+
+def test_rebalancing_step_must_divide_100(engine):
+    with pytest.raises(ValueError):
+        engine.suggest_rebalanced_weights(
+            ["HAL", "TCS"],
+            current_weights={
+                "HAL": 70,
+                "TCS": 30,
+            },
+            step=30,
+            max_weight=60,
+        )
+
+
+def test_rebalancing_impossible_max_weight_rejected(engine):
+    with pytest.raises(ValueError):
+        engine.suggest_rebalanced_weights(
+            ["HAL", "TCS"],
+            current_weights={
+                "HAL": 70,
+                "TCS": 30,
+            },
+            step=10,
+            max_weight=40,
+        )
+
+
+def test_rebalancing_equal_weight_supported(engine):
+    result = engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        step=10,
+        max_weight=60,
+    )
+
+    assert round(
+        sum(
+            result[
+                "recommended_weights"
+            ].values()
+        ),
+        2,
+    ) == 100.0
+
+    assert result["current_weights"] == {
+        "HAL": 50.0,
+        "TCS": 50.0,
+    }
+
+
+def test_rebalancing_does_not_mutate_current_weights(engine):
+    current_weights = {
+        "HAL": 70,
+        "TCS": 30,
+    }
+
+    original = current_weights.copy()
+
+    engine.suggest_rebalanced_weights(
+        ["HAL", "TCS"],
+        current_weights=current_weights,
+        step=10,
+        max_weight=60,
+    )
+
+    assert current_weights == original

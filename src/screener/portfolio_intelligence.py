@@ -609,6 +609,367 @@ class PortfolioIntelligenceEngine:
         }
 
     # =========================================================
+    # Day 28 - Portfolio Rebalancing
+    # =========================================================
+
+    def suggest_rebalanced_weights(
+        self,
+        company_ids,
+        current_weights=None,
+        year="Mar 2024",
+        ignore_invalid=False,
+        step=10,
+        max_weight=60.0,
+    ):
+        """
+        Suggest a portfolio allocation using the existing
+        portfolio intelligence scoring model.
+
+        Candidate allocations are evaluated using portfolio_score,
+        diversification and concentration risk. This is an
+        analytical simulation and not investment advice.
+        """
+        company_ids = list(dict.fromkeys(company_ids))
+
+        if not company_ids:
+            raise ValueError(
+                "At least one company is required."
+            )
+
+        if step <= 0 or step > 100:
+            raise ValueError(
+                "step must be greater than 0 and at most 100."
+            )
+
+        if max_weight <= 0 or max_weight > 100:
+            raise ValueError(
+                "max_weight must be greater than 0 and at most 100."
+            )
+
+        company_count = len(company_ids)
+
+        minimum_required_cap = (
+            100.0 / company_count
+        )
+
+        if max_weight + 1e-9 < minimum_required_cap:
+            raise ValueError(
+                "max_weight is too small for the number "
+                "of portfolio companies."
+            )
+
+        # Validate companies and obtain the canonical portfolio.
+        portfolio = self.analyse_portfolio(
+            company_ids,
+            year,
+            ignore_invalid,
+            weights=current_weights,
+        )
+
+        valid_company_ids = (
+            portfolio["company_id"]
+            .astype(str)
+            .tolist()
+        )
+
+        company_count = len(valid_company_ids)
+
+        if company_count == 1:
+            only_company = valid_company_ids[0]
+
+            proposed_weights = {
+                only_company: 100.0,
+            }
+
+            proposed_summary = self.portfolio_summary(
+                valid_company_ids,
+                year,
+                ignore_invalid,
+                weights=proposed_weights,
+            )
+
+            current_summary = self.portfolio_summary(
+                valid_company_ids,
+                year,
+                ignore_invalid,
+                weights=current_weights,
+            )
+
+            return {
+                "year": year,
+                "company_count": 1,
+                "current_weights": {
+                    only_company: 100.0,
+                },
+                "recommended_weights":
+                    proposed_weights,
+                "current_portfolio_score":
+                    current_summary[
+                        "portfolio_score"
+                    ],
+                "recommended_portfolio_score":
+                    proposed_summary[
+                        "portfolio_score"
+                    ],
+                "portfolio_score_change": 0.0,
+                "current_diversification_score":
+                    current_summary[
+                        "diversification_score"
+                    ],
+                "recommended_diversification_score":
+                    proposed_summary[
+                        "diversification_score"
+                    ],
+                "diversification_change": 0.0,
+                "current_concentration_risk":
+                    current_summary[
+                        "concentration_risk"
+                    ],
+                "recommended_concentration_risk":
+                    proposed_summary[
+                        "concentration_risk"
+                    ],
+                "current_largest_sector_weight_pct":
+                    current_summary[
+                        "largest_sector_weight_pct"
+                    ],
+                "recommended_largest_sector_weight_pct":
+                    proposed_summary[
+                        "largest_sector_weight_pct"
+                    ],
+                "largest_sector_weight_change": 0.0,
+                "recommended_summary":
+                    proposed_summary,
+            }
+
+        # Current allocation is taken from analyse_portfolio so
+        # equal-weight portfolios and custom portfolios use the
+        # same normalized representation.
+        current_weight_map = dict(
+            zip(
+                portfolio["company_id"],
+                pd.to_numeric(
+                    portfolio[
+                        "portfolio_weight_pct"
+                    ],
+                    errors="coerce",
+                ),
+            )
+        )
+
+        current_weight_map = {
+            str(company_id): round(
+                float(weight),
+                2,
+            )
+            for company_id, weight
+            in current_weight_map.items()
+        }
+
+        current_summary = self.portfolio_summary(
+            valid_company_ids,
+            year,
+            ignore_invalid,
+            weights=current_weight_map,
+        )
+
+        best_weights = current_weight_map.copy()
+        best_summary = current_summary
+        best_score = current_summary[
+            "portfolio_score"
+        ]
+
+        # Integer units make candidate totals exact and avoid
+        # floating-point accumulation errors.
+        units = round(100 / step)
+
+        if abs(units * step - 100) > 1e-9:
+            raise ValueError(
+                "step must divide 100 exactly."
+            )
+
+        max_units = int(
+            max_weight // step
+        )
+
+        def generate_allocations(
+            remaining_units,
+            positions_left,
+            prefix,
+        ):
+            if positions_left == 1:
+                if (
+                    0 <= remaining_units
+                    <= max_units
+                ):
+                    yield prefix + [
+                        remaining_units
+                    ]
+                return
+
+            upper = min(
+                max_units,
+                remaining_units,
+            )
+
+            for value in range(
+                upper + 1
+            ):
+                yield from generate_allocations(
+                    remaining_units - value,
+                    positions_left - 1,
+                    prefix + [value],
+                )
+
+        for allocation_units in generate_allocations(
+            units,
+            company_count,
+            [],
+        ):
+            candidate_weights = {
+                company_id: round(
+                    allocation_unit * step,
+                    2,
+                )
+                for company_id, allocation_unit
+                in zip(
+                    valid_company_ids,
+                    allocation_units,
+                )
+            }
+
+            candidate_summary = (
+                self.portfolio_summary(
+                    valid_company_ids,
+                    year,
+                    ignore_invalid,
+                    weights=candidate_weights,
+                )
+            )
+
+            candidate_score = (
+                candidate_summary[
+                    "portfolio_score"
+                ]
+            )
+
+            if candidate_score is None:
+                continue
+
+            if (
+                best_score is None
+                or candidate_score > best_score
+            ):
+                best_score = candidate_score
+                best_weights = candidate_weights
+                best_summary = candidate_summary
+
+            elif (
+                candidate_score == best_score
+                and candidate_summary[
+                    "diversification_score"
+                ]
+                > best_summary[
+                    "diversification_score"
+                ]
+            ):
+                best_weights = candidate_weights
+                best_summary = candidate_summary
+
+        def difference(
+            proposed_value,
+            current_value,
+        ):
+            if (
+                proposed_value is None
+                or current_value is None
+                or pd.isna(proposed_value)
+                or pd.isna(current_value)
+            ):
+                return None
+
+            return round(
+                float(proposed_value)
+                - float(current_value),
+                2,
+            )
+
+        return {
+            "year": year,
+            "company_count": company_count,
+            "current_weights":
+                current_weight_map,
+            "recommended_weights":
+                best_weights,
+
+            "current_portfolio_score":
+                current_summary[
+                    "portfolio_score"
+                ],
+            "recommended_portfolio_score":
+                best_summary[
+                    "portfolio_score"
+                ],
+            "portfolio_score_change":
+                difference(
+                    best_summary[
+                        "portfolio_score"
+                    ],
+                    current_summary[
+                        "portfolio_score"
+                    ],
+                ),
+
+            "current_diversification_score":
+                current_summary[
+                    "diversification_score"
+                ],
+            "recommended_diversification_score":
+                best_summary[
+                    "diversification_score"
+                ],
+            "diversification_change":
+                difference(
+                    best_summary[
+                        "diversification_score"
+                    ],
+                    current_summary[
+                        "diversification_score"
+                    ],
+                ),
+
+            "current_concentration_risk":
+                current_summary[
+                    "concentration_risk"
+                ],
+            "recommended_concentration_risk":
+                best_summary[
+                    "concentration_risk"
+                ],
+
+            "current_largest_sector_weight_pct":
+                current_summary[
+                    "largest_sector_weight_pct"
+                ],
+            "recommended_largest_sector_weight_pct":
+                best_summary[
+                    "largest_sector_weight_pct"
+                ],
+            "largest_sector_weight_change":
+                difference(
+                    best_summary[
+                        "largest_sector_weight_pct"
+                    ],
+                    current_summary[
+                        "largest_sector_weight_pct"
+                    ],
+                ),
+
+            "recommended_summary":
+                best_summary,
+        }
+
+    # =========================================================
     # Narrative
     # =========================================================
 

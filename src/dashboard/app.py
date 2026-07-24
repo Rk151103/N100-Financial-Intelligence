@@ -1572,6 +1572,179 @@ elif dashboard_view == "Portfolio Intelligence":
                 )
 
     # -----------------------------------------------------
+    # Day 28 - Portfolio Rebalancing Suggestions
+    # -----------------------------------------------------
+
+    st.subheader("Portfolio Rebalancing Suggestions")
+
+    st.caption(
+        "Generate an analytical allocation that aims to improve "
+        "portfolio diversification and reduce concentration risk."
+    )
+
+    with st.expander(
+        "Generate Rebalancing Suggestion",
+        expanded=False,
+    ):
+        col1, col2 = st.columns(2)
+
+        with col1:
+            rebalance_step = st.selectbox(
+                "Weight Adjustment Step",
+                options=[5, 10, 20, 25],
+                index=1,
+                help=(
+                    "Controls the percentage increments used when "
+                    "searching for alternative portfolio allocations."
+                ),
+            )
+
+        with col2:
+            rebalance_max_weight = st.number_input(
+                "Maximum Holding Weight (%)",
+                min_value=10.0,
+                max_value=100.0,
+                value=60.0,
+                step=5.0,
+                format="%.2f",
+                help=(
+                    "Maximum percentage that can be allocated "
+                    "to any individual holding."
+                ),
+            )
+
+        if st.button(
+            "Generate Rebalancing Suggestion",
+            key="generate_portfolio_rebalancing",
+        ):
+            try:
+                rebalance_result = (
+                    portfolio_engine.suggest_rebalanced_weights(
+                        selected_portfolio,
+                        current_weights=portfolio_weights,
+                        year=portfolio_year,
+                        ignore_invalid=False,
+                        step=rebalance_step,
+                        max_weight=rebalance_max_weight,
+                    )
+                )
+
+                st.markdown("#### Recommended Allocation")
+
+                recommended_weights = (
+                    rebalance_result["recommended_weights"]
+                )
+
+                rebalance_rows = []
+
+                current_weights_display = dict(
+                    zip(
+                        portfolio_df["company_id"],
+                        portfolio_df["portfolio_weight_pct"],
+                    )
+                )
+
+                for company_id in selected_portfolio:
+                    current_weight = float(
+                        current_weights_display.get(
+                            company_id,
+                            0.0,
+                        )
+                    )
+
+                    recommended_weight = float(
+                        recommended_weights.get(
+                            company_id,
+                            0.0,
+                        )
+                    )
+
+                    rebalance_rows.append(
+                        {
+                            "Company": company_id_to_name.get(
+                                company_id,
+                                company_id,
+                            ),
+                            "Current Weight (%)": current_weight,
+                            "Recommended Weight (%)": recommended_weight,
+                            "Change (%)": round(
+                                recommended_weight - current_weight,
+                                2,
+                            ),
+                        }
+                    )
+
+                rebalance_df = pd.DataFrame(
+                    rebalance_rows
+                )
+
+                st.dataframe(
+                    rebalance_df,
+                    width="stretch",
+                    hide_index=True,
+                )
+
+                st.markdown("#### Rebalancing Impact")
+
+                col1, col2, col3 = st.columns(3)
+
+                with col1:
+                    st.metric(
+                        "Portfolio Score",
+                        (
+                            f"{rebalance_result['recommended_portfolio_score']:.2f}"
+                        ),
+                        delta=(
+                            f"{rebalance_result['portfolio_score_change']:+.2f}"
+                        ),
+                    )
+
+                with col2:
+                    st.metric(
+                        "Diversification",
+                        (
+                            f"{rebalance_result['recommended_diversification_score']:.2f}"
+                        ),
+                        delta=(
+                            f"{rebalance_result['diversification_change']:+.2f}"
+                        ),
+                    )
+
+                with col3:
+                    st.metric(
+                        "Concentration Risk",
+                        rebalance_result[
+                            "recommended_concentration_risk"
+                        ],
+                    )
+
+                    st.caption(
+                        "Current: "
+                        f"{rebalance_result['current_concentration_risk']}"
+                    )
+
+                st.metric(
+                    "Largest Sector Exposure",
+                    (
+                        f"{rebalance_result['recommended_largest_sector_weight_pct']:.2f}%"
+                    ),
+                    delta=(
+                        f"{rebalance_result['largest_sector_weight_change']:+.2f}%"
+                    ),
+                    delta_color="inverse",
+                )
+
+                st.caption(
+                    "Rebalancing suggestions are analytical model "
+                    "outputs and do not constitute investment advice."
+                )
+
+            except Exception as exc:
+                st.error(
+                    f"Unable to generate rebalancing suggestion: {exc}"
+                )
+
+    # -----------------------------------------------------
     # Portfolio Holdings
     # -----------------------------------------------------
 
