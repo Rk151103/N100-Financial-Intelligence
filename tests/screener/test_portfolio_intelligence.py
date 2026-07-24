@@ -669,3 +669,188 @@ def test_export_csv_contains_weight(
         "portfolio_weight_pct"
         in df.columns
     )
+
+# ============================================================
+# Day 26 - Custom Portfolio Weights
+# ============================================================
+
+
+def test_custom_portfolio_weights(engine):
+    result = engine.analyse_portfolio(
+        ["HAL", "TCS"],
+        YEAR,
+        weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+    )
+
+    weights = dict(
+        zip(
+            result["company_id"],
+            result["portfolio_weight_pct"],
+        )
+    )
+
+    assert weights["HAL"] == 70.0
+    assert weights["TCS"] == 30.0
+
+
+def test_custom_weights_must_total_100(engine):
+    with pytest.raises(
+        ValueError,
+        match="must total 100",
+    ):
+        engine.analyse_portfolio(
+            ["HAL", "TCS"],
+            YEAR,
+            weights={
+                "HAL": 60,
+                "TCS": 30,
+            },
+        )
+
+
+def test_negative_custom_weight_rejected(engine):
+    with pytest.raises(
+        ValueError,
+        match="cannot be negative",
+    ):
+        engine.analyse_portfolio(
+            ["HAL", "TCS"],
+            YEAR,
+            weights={
+                "HAL": 110,
+                "TCS": -10,
+            },
+        )
+
+
+def test_missing_custom_weight_rejected(engine):
+    with pytest.raises(
+        ValueError,
+        match="Missing portfolio weights",
+    ):
+        engine.analyse_portfolio(
+            ["HAL", "TCS"],
+            YEAR,
+            weights={
+                "HAL": 100,
+            },
+        )
+
+
+def test_custom_weight_sector_allocation(engine):
+    result = engine.sector_allocation(
+        ["HAL", "TCS"],
+        YEAR,
+        weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+    )
+
+    allocation = dict(
+        zip(
+            result["broad_sector"],
+            result["weight_pct"],
+        )
+    )
+
+    assert allocation["Industrials"] == 70.0
+    assert (
+        allocation["Information Technology"]
+        == 30.0
+    )
+
+
+def test_custom_weight_concentration_risk(engine):
+    result = engine.concentration_risk(
+        ["HAL", "TCS"],
+        YEAR,
+        weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+    )
+
+    assert result == "High"
+
+
+def test_custom_weight_portfolio_score(engine):
+    equal_score = engine.portfolio_score(
+        ["HAL", "TCS"],
+        YEAR,
+    )
+
+    weighted_score = engine.portfolio_score(
+        ["HAL", "TCS"],
+        YEAR,
+        weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+    )
+
+    assert equal_score == 80.0
+    assert weighted_score == 79.86
+
+
+def test_equal_weight_backward_compatibility(engine):
+    result = engine.analyse_portfolio(
+        ["HAL", "TCS"],
+        YEAR,
+    )
+
+    assert (
+        result["portfolio_weight_pct"]
+        .tolist()
+        == [50.0, 50.0]
+    )
+
+
+def test_custom_weight_summary(engine):
+    summary = engine.portfolio_summary(
+        ["HAL", "TCS"],
+        YEAR,
+        weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+    )
+
+    assert summary["portfolio_score"] == 79.86
+    assert (
+        summary["largest_sector_weight_pct"]
+        == 70.0
+    )
+    assert summary["concentration_risk"] == "High"
+
+
+def test_custom_weight_export_csv(
+    engine,
+    tmp_path,
+):
+    output = tmp_path / "weighted_portfolio.csv"
+
+    engine.export_csv(
+        ["HAL", "TCS"],
+        YEAR,
+        output_path=output,
+        weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+    )
+
+    df = pd.read_csv(output)
+
+    weights = dict(
+        zip(
+            df["company_id"],
+            df["portfolio_weight_pct"],
+        )
+    )
+
+    assert weights["HAL"] == 70.0
+    assert weights["TCS"] == 30.0

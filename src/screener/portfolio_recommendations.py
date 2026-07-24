@@ -141,6 +141,7 @@ class PortfolioRecommendationEngine:
         company_ids: Iterable[str],
         year: str,
         ignore_invalid: bool = False,
+        weights=None,
     ) -> pd.DataFrame:
         """Generate recommendation for every portfolio holding."""
 
@@ -150,6 +151,7 @@ class PortfolioRecommendationEngine:
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         ).copy()
 
         portfolio["recommended_action"] = portfolio.apply(
@@ -243,6 +245,7 @@ class PortfolioRecommendationEngine:
         company_ids: Iterable[str],
         year: str,
         ignore_invalid: bool = False,
+        weights=None,
     ) -> pd.DataFrame:
         """Analyse sector concentration and classify sector risk."""
 
@@ -252,6 +255,7 @@ class PortfolioRecommendationEngine:
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         ).copy()
 
         def risk_level(weight):
@@ -290,6 +294,7 @@ class PortfolioRecommendationEngine:
         company_ids: Iterable[str],
         year: str,
         ignore_invalid: bool = False,
+        weights=None,
     ) -> pd.DataFrame:
         """Return distribution of recommended holding actions."""
 
@@ -297,6 +302,7 @@ class PortfolioRecommendationEngine:
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         result = (
@@ -337,6 +343,7 @@ class PortfolioRecommendationEngine:
         company_ids: Iterable[str],
         year: str,
         ignore_invalid: bool = False,
+        weights=None,
     ) -> pd.DataFrame:
         """Return recommendation priority distribution."""
 
@@ -344,6 +351,7 @@ class PortfolioRecommendationEngine:
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         result = (
@@ -391,6 +399,7 @@ class PortfolioRecommendationEngine:
         company_ids: Iterable[str],
         year: str,
         ignore_invalid: bool = False,
+        weights=None,
     ) -> list[str]:
         """Generate portfolio-level analytical recommendations."""
 
@@ -398,12 +407,14 @@ class PortfolioRecommendationEngine:
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         holdings = self.holding_recommendations(
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         recommendations = []
@@ -489,6 +500,7 @@ class PortfolioRecommendationEngine:
         company_ids: Iterable[str],
         year: str,
         ignore_invalid: bool = False,
+        weights=None,
     ) -> dict:
         """Build the Day 23 portfolio recommendation summary."""
 
@@ -497,6 +509,7 @@ class PortfolioRecommendationEngine:
                 company_ids,
                 year,
                 ignore_invalid=ignore_invalid,
+                weights=weights,
             )
         )
 
@@ -504,18 +517,21 @@ class PortfolioRecommendationEngine:
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         actions = self.action_distribution(
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         priorities = self.priority_distribution(
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         action_counts = dict(
@@ -607,6 +623,7 @@ class PortfolioRecommendationEngine:
                     company_ids,
                     year,
                     ignore_invalid=ignore_invalid,
+                    weights=weights,
                 )
             ),
         }
@@ -616,6 +633,7 @@ class PortfolioRecommendationEngine:
         company_ids: Iterable[str],
         year: str,
         ignore_invalid: bool = False,
+        weights=None,
     ) -> str:
         """Generate readable Day 23 narrative."""
 
@@ -623,6 +641,7 @@ class PortfolioRecommendationEngine:
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         return (
@@ -644,6 +663,7 @@ class PortfolioRecommendationEngine:
         year: str,
         output_path=None,
         ignore_invalid: bool = False,
+        weights=None,
     ) -> Path:
         """Export holding recommendations to CSV."""
 
@@ -651,6 +671,7 @@ class PortfolioRecommendationEngine:
             company_ids,
             year,
             ignore_invalid=ignore_invalid,
+            weights=weights,
         )
 
         if output_path is None:

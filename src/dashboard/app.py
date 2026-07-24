@@ -1211,6 +1211,74 @@ elif dashboard_view == "Portfolio Intelligence":
         )
         st.stop()
 
+    # -----------------------------------------------------
+    # Portfolio Weight Configuration
+    # -----------------------------------------------------
+
+    weight_mode = st.radio(
+        "Portfolio Weighting",
+        [
+            "Equal Weight",
+            "Custom Weight",
+        ],
+        horizontal=True,
+        help=(
+            "Equal Weight distributes the portfolio equally. "
+            "Custom Weight lets you assign your own percentages."
+        ),
+    )
+
+    portfolio_weights = None
+
+    if weight_mode == "Custom Weight":
+        st.markdown("#### Custom Portfolio Weights")
+
+        st.caption(
+            "Assign a percentage to each holding. "
+            "The total must equal 100%."
+        )
+
+        portfolio_weights = {}
+
+        default_weight = round(
+            100.0 / len(selected_portfolio),
+            2,
+        )
+
+        for company_name in selected_company_names:
+            company_id = company_name_to_id[
+                company_name
+            ]
+
+            portfolio_weights[company_id] = (
+                st.number_input(
+                    company_name,
+                    min_value=0.0,
+                    max_value=100.0,
+                    value=default_weight,
+                    step=1.0,
+                    format="%.2f",
+                    key=f"portfolio_weight_{company_id}",
+                )
+            )
+
+        total_weight = round(
+            sum(portfolio_weights.values()),
+            2,
+        )
+
+        st.metric(
+            "Total Portfolio Weight",
+            f"{total_weight:.2f}%",
+        )
+
+        if abs(total_weight - 100.0) > 0.01:
+            st.error(
+                "Custom portfolio weights must total 100%. "
+                f"Current total: {total_weight:.2f}%"
+            )
+            st.stop()
+
     try:
         portfolio_engine = PortfolioIntelligenceEngine()
         recommendation_engine = PortfolioRecommendationEngine()
@@ -1219,24 +1287,28 @@ elif dashboard_view == "Portfolio Intelligence":
             selected_portfolio,
             year=portfolio_year,
             ignore_invalid=False,
+            weights=portfolio_weights,
         )
 
         portfolio_summary = portfolio_engine.portfolio_summary(
             selected_portfolio,
             year=portfolio_year,
             ignore_invalid=False,
+            weights=portfolio_weights,
         )
 
         sector_allocation_df = portfolio_engine.sector_allocation(
             selected_portfolio,
             year=portfolio_year,
             ignore_invalid=False,
+            weights=portfolio_weights,
         )
 
         signal_distribution_df = portfolio_engine.signal_distribution(
             selected_portfolio,
             year=portfolio_year,
             ignore_invalid=False,
+            weights=portfolio_weights,
         )
 
         holding_recommendations_df = (
@@ -1244,6 +1316,7 @@ elif dashboard_view == "Portfolio Intelligence":
                 selected_portfolio,
                 year=portfolio_year,
                 ignore_invalid=False,
+                weights=portfolio_weights,
             )
         )
 
@@ -1252,6 +1325,7 @@ elif dashboard_view == "Portfolio Intelligence":
                 selected_portfolio,
                 year=portfolio_year,
                 ignore_invalid=False,
+                weights=portfolio_weights,
             )
         )
 
@@ -1260,6 +1334,7 @@ elif dashboard_view == "Portfolio Intelligence":
                 selected_portfolio,
                 year=portfolio_year,
                 ignore_invalid=False,
+                weights=portfolio_weights,
             )
         )
 
@@ -1268,6 +1343,7 @@ elif dashboard_view == "Portfolio Intelligence":
                 selected_portfolio,
                 year=portfolio_year,
                 ignore_invalid=False,
+                weights=portfolio_weights,
             )
         )
 

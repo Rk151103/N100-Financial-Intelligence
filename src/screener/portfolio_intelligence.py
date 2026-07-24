@@ -41,11 +41,9 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
-        """
-        Analyse all companies in a portfolio.
-        """
-
+        """Analyse companies with equal or custom portfolio weights."""
         df = self.decision_engine.analyse_companies(
             company_ids,
             year,
@@ -53,15 +51,61 @@ class PortfolioIntelligenceEngine:
         ).copy()
 
         if df.empty:
-            raise ValueError(
-                "Portfolio contains no valid companies."
+            raise ValueError("Portfolio contains no valid companies.")
+
+        if weights is None:
+            df["portfolio_weight_pct"] = 100.0 / len(df)
+        else:
+            if not isinstance(weights, dict):
+                raise TypeError("weights must be a dictionary of company_id - percentage.")
+
+            normalized_weights = {
+                str(company_id).strip().upper(): float(weight)
+                for company_id, weight in weights.items()
+            }
+
+            if any(weight < 0 for weight in normalized_weights.values()):
+                raise ValueError("Portfolio weights cannot be negative.")
+
+            analysed_ids = (
+                df["company_id"].astype(str).str.strip().str.upper().tolist()
             )
 
-        # Equal-weight portfolio for Day 22.
-        df["portfolio_weight_pct"] = round(
-            100.0 / len(df),
-            2,
-        )
+            missing_weights = [
+                company_id
+                for company_id in analysed_ids
+                if company_id not in normalized_weights
+            ]
+
+            if missing_weights:
+                raise ValueError(
+                    "Missing portfolio weights for: " + ", ".join(missing_weights)
+                )
+
+            selected_weights = {
+                company_id: normalized_weights[company_id]
+                for company_id in analysed_ids
+            }
+
+            total_weight = sum(selected_weights.values())
+
+            if abs(total_weight - 100.0) > 0.01:
+                raise ValueError(
+                    "Portfolio weights must total 100%%. "
+                    f"Current total: {total_weight:.2f}%%."
+                )
+
+            df["portfolio_weight_pct"] = (
+                df["company_id"]
+                .astype(str)
+                .str.strip()
+                .str.upper()
+                .map(selected_weights)
+            )
+
+        df["portfolio_weight_pct"] = pd.to_numeric(
+            df["portfolio_weight_pct"], errors="coerce"
+        ).round(2)
 
         return df
 
@@ -74,11 +118,13 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
         df = self.analyse_portfolio(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         result = (
@@ -86,30 +132,24 @@ class PortfolioIntelligenceEngine:
                 "broad_sector",
                 dropna=False,
             )
-            .size()
-            .reset_index(
-                name="company_count"
+            .agg(
+                company_count=("company_id", "size"),
+                weight_pct=("portfolio_weight_pct", "sum"),
             )
+            .reset_index()
         )
 
         result["weight_pct"] = (
-            result["company_count"]
-            / len(df)
-            * 100
-        ).round(2)
+            pd.to_numeric(
+                result["weight_pct"],
+                errors="coerce",
+            ).round(2)
+        )
 
         return result.sort_values(
-            [
-                "weight_pct",
-                "broad_sector",
-            ],
-            ascending=[
-                False,
-                True,
-            ],
-        ).reset_index(
-            drop=True
-        )
+            ["weight_pct", "broad_sector"],
+            ascending=[False, True],
+        ).reset_index(drop=True)
 
     # =========================================================
     # Signal Distribution
@@ -120,29 +160,32 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
         df = self.analyse_portfolio(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         result = (
-            df["signal"]
-            .value_counts()
-            .rename_axis("signal")
-            .reset_index(
-                name="company_count"
+            df.groupby("signal", dropna=False)
+            .agg(
+                company_count=("company_id", "size"),
+                weight_pct=("portfolio_weight_pct", "sum"),
             )
+            .reset_index()
         )
 
-        result["weight_pct"] = (
-            result["company_count"]
-            / len(df)
-            * 100
+        result["weight_pct"] = pd.to_numeric(
+            result["weight_pct"], errors="coerce"
         ).round(2)
 
-        return result
+        return result.sort_values(
+            ["weight_pct", "signal"],
+            ascending=[False, True],
+        ).reset_index(drop=True)
 
     # =========================================================
     # Assessment Distribution
@@ -153,29 +196,32 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
         df = self.analyse_portfolio(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         result = (
-            df["assessment"]
-            .value_counts()
-            .rename_axis("assessment")
-            .reset_index(
-                name="company_count"
+            df.groupby("assessment", dropna=False)
+            .agg(
+                company_count=("company_id", "size"),
+                weight_pct=("portfolio_weight_pct", "sum"),
             )
+            .reset_index()
         )
 
-        result["weight_pct"] = (
-            result["company_count"]
-            / len(df)
-            * 100
+        result["weight_pct"] = pd.to_numeric(
+            result["weight_pct"], errors="coerce"
         ).round(2)
 
-        return result
+        return result.sort_values(
+            ["weight_pct", "assessment"],
+            ascending=[False, True],
+        ).reset_index(drop=True)
 
     # =========================================================
     # Diversification
@@ -186,25 +232,21 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
-        """
-        Calculate a simple 0-100 diversification score.
-
-        Components:
-        60% sector diversity
-        40% concentration control
-        """
-
+        """Calculate a 0-100 diversification score."""
         df = self.analyse_portfolio(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         sector_df = self.sector_allocation(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         company_count = len(df)
@@ -213,14 +255,10 @@ class PortfolioIntelligenceEngine:
         if company_count == 0:
             return 0.0
 
-        ideal_sector_count = min(
-            company_count,
-            8,
-        )
+        ideal_sector_count = min(company_count, 8)
 
         sector_diversity = min(
-            sector_count
-            / ideal_sector_count,
+            sector_count / ideal_sector_count,
             1.0,
         ) * 100
 
@@ -252,11 +290,13 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
         sectors = self.sector_allocation(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         max_weight = float(
@@ -280,37 +320,62 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
-        """
-        Portfolio score:
-
-        Average intelligence score  40%
-        Average decision score      35%
-        Diversification score       25%
-        """
-
+        """Calculate the weighted portfolio intelligence score."""
         df = self.analyse_portfolio(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
-        intelligence = pd.to_numeric(
+        portfolio_weights = pd.to_numeric(
+            df["portfolio_weight_pct"],
+            errors="coerce",
+        )
+
+        intelligence_values = pd.to_numeric(
             df["intelligence_score"],
             errors="coerce",
-        ).mean()
+        )
 
-        decision = pd.to_numeric(
+        decision_values = pd.to_numeric(
             df["decision_score"],
             errors="coerce",
-        ).mean()
+        )
 
-        diversification = (
-            self.diversification_score(
-                company_ids,
-                year,
-                ignore_invalid,
-            )
+        intelligence_mask = (
+            intelligence_values.notna()
+            & portfolio_weights.notna()
+        )
+
+        decision_mask = (
+            decision_values.notna()
+            & portfolio_weights.notna()
+        )
+
+        if intelligence_mask.any():
+            intelligence = (
+                intelligence_values[intelligence_mask]
+                * portfolio_weights[intelligence_mask]
+            ).sum() / portfolio_weights[intelligence_mask].sum()
+        else:
+            intelligence = None
+
+        if decision_mask.any():
+            decision = (
+                decision_values[decision_mask]
+                * portfolio_weights[decision_mask]
+            ).sum() / portfolio_weights[decision_mask].sum()
+        else:
+            decision = None
+
+        diversification = self.diversification_score(
+            company_ids,
+            year,
+            ignore_invalid,
+            weights=weights,
         )
 
         values = [
@@ -320,23 +385,23 @@ class PortfolioIntelligenceEngine:
         ]
 
         available = [
-            (value, weight)
-            for value, weight in values
-            if pd.notna(value)
+            (value, component_weight)
+            for value, component_weight in values
+            if value is not None and pd.notna(value)
         ]
 
         if not available:
             return None
 
-        total_weight = sum(
-            weight
-            for _, weight in available
+        total_component_weight = sum(
+            component_weight
+            for _, component_weight in available
         )
 
         score = sum(
-            value * weight
-            for value, weight in available
-        ) / total_weight
+            value * component_weight
+            for value, component_weight in available
+        ) / total_component_weight
 
         return round(
             max(0.0, min(100.0, score)),
@@ -418,17 +483,20 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
         df = self.analyse_portfolio(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         sectors = self.sector_allocation(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         strongest = self.strongest_holding(
@@ -447,29 +515,56 @@ class PortfolioIntelligenceEngine:
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
-        diversification = (
-            self.diversification_score(
-                company_ids,
-                year,
-                ignore_invalid,
-            )
+        diversification = self.diversification_score(
+            company_ids,
+            year,
+            ignore_invalid,
+            weights=weights,
+        )
+
+        portfolio_weights = pd.to_numeric(
+            df["portfolio_weight_pct"],
+            errors="coerce",
+        )
+
+        intelligence_values = pd.to_numeric(
+            df["intelligence_score"],
+            errors="coerce",
+        )
+
+        decision_values = pd.to_numeric(
+            df["decision_score"],
+            errors="coerce",
+        )
+
+        intelligence_mask = (
+            intelligence_values.notna()
+            & portfolio_weights.notna()
+        )
+
+        decision_mask = (
+            decision_values.notna()
+            & portfolio_weights.notna()
         )
 
         average_intelligence = round(
-            pd.to_numeric(
-                df["intelligence_score"],
-                errors="coerce",
-            ).mean(),
+            (
+                intelligence_values[intelligence_mask]
+                * portfolio_weights[intelligence_mask]
+            ).sum()
+            / portfolio_weights[intelligence_mask].sum(),
             2,
         )
 
         average_decision = round(
-            pd.to_numeric(
-                df["decision_score"],
-                errors="coerce",
-            ).mean(),
+            (
+                decision_values[decision_mask]
+                * portfolio_weights[decision_mask]
+            ).sum()
+            / portfolio_weights[decision_mask].sum(),
             2,
         )
 
@@ -491,17 +586,12 @@ class PortfolioIntelligenceEngine:
                     company_ids,
                     year,
                     ignore_invalid,
+                    weights=weights,
                 ),
             "largest_sector":
-                sectors.iloc[0][
-                    "broad_sector"
-                ],
+                sectors.iloc[0]["broad_sector"],
             "largest_sector_weight_pct":
-                float(
-                    sectors.iloc[0][
-                        "weight_pct"
-                    ]
-                ),
+                float(sectors.iloc[0]["weight_pct"]),
             "strongest_company_id":
                 strongest["company_id"],
             "strongest_company_name":
@@ -515,10 +605,7 @@ class PortfolioIntelligenceEngine:
             "weakest_decision_score":
                 weakest["decision_score"],
             "invalid_companies":
-                df.attrs.get(
-                    "invalid_companies",
-                    [],
-                ),
+                df.attrs.get("invalid_companies", []),
         }
 
     # =========================================================
@@ -530,11 +617,13 @@ class PortfolioIntelligenceEngine:
         company_ids,
         year="Mar 2024",
         ignore_invalid=False,
+        weights=None,
     ):
         summary = self.portfolio_summary(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         return (
@@ -567,11 +656,13 @@ class PortfolioIntelligenceEngine:
         year="Mar 2024",
         output_path=None,
         ignore_invalid=False,
+        weights=None,
     ):
         df = self.analyse_portfolio(
             company_ids,
             year,
             ignore_invalid,
+            weights=weights,
         )
 
         if output_path is None:
@@ -585,9 +676,7 @@ class PortfolioIntelligenceEngine:
                 / "portfolio_intelligence.csv"
             )
         else:
-            output_path = Path(
-                output_path
-            )
+            output_path = Path(output_path)
 
             output_path.parent.mkdir(
                 parents=True,
