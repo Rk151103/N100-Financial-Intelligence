@@ -52,3 +52,5 @@ htmlcov/
 
 # Backup files
 *.bak
+# Generated analytical reports
+output/*.csv
