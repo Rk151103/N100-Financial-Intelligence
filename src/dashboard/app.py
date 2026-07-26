@@ -1724,6 +1724,97 @@ elif dashboard_view == "Portfolio Intelligence":
                 )
 
                 # ---------------------------------------------
+                # Day 31 - Rebalancing Action Summary
+                # ---------------------------------------------
+
+                action_summary = (
+                    portfolio_engine.rebalancing_summary(
+                        selected_portfolio,
+                        current_weights=portfolio_weights,
+                        year=portfolio_year,
+                        ignore_invalid=False,
+                        step=rebalance_step,
+                        max_weight=rebalance_max_weight,
+                    )
+                )
+
+                st.markdown("#### Rebalancing Action Summary")
+
+                col1, col2, col3, col4 = st.columns(4)
+
+                with col1:
+                    st.metric(
+                        "Increase",
+                        action_summary["increase_count"],
+                    )
+
+                with col2:
+                    st.metric(
+                        "Reduce",
+                        action_summary["reduce_count"],
+                    )
+
+                with col3:
+                    st.metric(
+                        "Maintain",
+                        action_summary["maintain_count"],
+                    )
+
+                with col4:
+                    st.metric(
+                        "Portfolio Turnover",
+                        (
+                            f"{action_summary['portfolio_turnover_pct']:.2f}%"
+                        ),
+                    )
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    increase_name = action_summary[
+                        "largest_increase_company_name"
+                    ]
+
+                    if increase_name:
+                        st.success(
+                            f"""
+**Largest Increase**
+
+{increase_name}
+
++{action_summary['largest_increase_pct']:.2f}%
+"""
+                        )
+                    else:
+                        st.info(
+                            "No holding requires an increase."
+                        )
+
+                with col2:
+                    reduction_name = action_summary[
+                        "largest_reduction_company_name"
+                    ]
+
+                    if reduction_name:
+                        st.warning(
+                            f"""
+**Largest Reduction**
+
+{reduction_name}
+
+-{action_summary['largest_reduction_pct']:.2f}%
+"""
+                        )
+                    else:
+                        st.info(
+                            "No holding requires a reduction."
+                        )
+
+                st.write(
+                    action_summary["summary"]
+                )
+
+                # ---------------------------------------------
                 # Day 30 - Rebalancing Report Export
                 # ---------------------------------------------
 

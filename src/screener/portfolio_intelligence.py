@@ -1242,6 +1242,260 @@ class PortfolioIntelligenceEngine:
         return plan
 
     # =========================================================
+    # Day 31 - Portfolio Rebalancing Action Summary
+    # =========================================================
+
+    def rebalancing_summary(
+        self,
+        company_ids,
+        current_weights=None,
+        year="Mar 2024",
+        ignore_invalid=False,
+        step=5,
+        max_weight=40,
+    ):
+        """Summarise holding-level portfolio rebalancing actions."""
+
+        plan = self.generate_rebalancing_plan(
+            company_ids,
+            current_weights=current_weights,
+            year=year,
+            ignore_invalid=ignore_invalid,
+            step=step,
+            max_weight=max_weight,
+        )
+
+        result = plan.attrs.get(
+            "rebalancing_result",
+            {},
+        )
+
+        if plan.empty:
+            return {
+                "year": year,
+                "holding_count": 0,
+                "increase_count": 0,
+                "reduce_count": 0,
+                "maintain_count": 0,
+                "changed_holdings_count": 0,
+                "total_increase_pct": 0.0,
+                "total_reduction_pct": 0.0,
+                "portfolio_turnover_pct": 0.0,
+                "largest_increase_company_id": None,
+                "largest_increase_company_name": None,
+                "largest_increase_pct": 0.0,
+                "largest_reduction_company_id": None,
+                "largest_reduction_company_name": None,
+                "largest_reduction_pct": 0.0,
+                "summary": "No portfolio holdings were available.",
+                "rebalancing_result": result,
+            }
+
+        increase_mask = (
+            plan["action"] == "Increase"
+        )
+
+        reduce_mask = (
+            plan["action"] == "Reduce"
+        )
+
+        maintain_mask = (
+            plan["action"] == "Maintain"
+        )
+
+        increase_count = int(
+            increase_mask.sum()
+        )
+
+        reduce_count = int(
+            reduce_mask.sum()
+        )
+
+        maintain_count = int(
+            maintain_mask.sum()
+        )
+
+        changed_holdings_count = (
+            increase_count + reduce_count
+        )
+
+        total_increase = round(
+            float(
+                plan.loc[
+                    increase_mask,
+                    "weight_change_pct",
+                ].sum()
+            ),
+            2,
+        )
+
+        total_reduction = round(
+            abs(
+                float(
+                    plan.loc[
+                        reduce_mask,
+                        "weight_change_pct",
+                    ].sum()
+                )
+            ),
+            2,
+        )
+
+        portfolio_turnover = round(
+            (
+                total_increase
+                + total_reduction
+            )
+            / 2.0,
+            2,
+        )
+
+        largest_increase_company_id = None
+        largest_increase_company_name = None
+        largest_increase_pct = 0.0
+
+        if increase_mask.any():
+            increase_rows = plan.loc[
+                increase_mask
+            ]
+
+            largest_increase_index = (
+                increase_rows[
+                    "weight_change_pct"
+                ].idxmax()
+            )
+
+            largest_increase_row = plan.loc[
+                largest_increase_index
+            ]
+
+            largest_increase_company_id = (
+                largest_increase_row[
+                    "company_id"
+                ]
+            )
+
+            largest_increase_company_name = (
+                largest_increase_row[
+                    "company_name"
+                ]
+            )
+
+            largest_increase_pct = round(
+                float(
+                    largest_increase_row[
+                        "weight_change_pct"
+                    ]
+                ),
+                2,
+            )
+
+        largest_reduction_company_id = None
+        largest_reduction_company_name = None
+        largest_reduction_pct = 0.0
+
+        if reduce_mask.any():
+            reduce_rows = plan.loc[
+                reduce_mask
+            ]
+
+            largest_reduction_index = (
+                reduce_rows[
+                    "weight_change_pct"
+                ].idxmin()
+            )
+
+            largest_reduction_row = plan.loc[
+                largest_reduction_index
+            ]
+
+            largest_reduction_company_id = (
+                largest_reduction_row[
+                    "company_id"
+                ]
+            )
+
+            largest_reduction_company_name = (
+                largest_reduction_row[
+                    "company_name"
+                ]
+            )
+
+            largest_reduction_pct = round(
+                abs(
+                    float(
+                        largest_reduction_row[
+                            "weight_change_pct"
+                        ]
+                    )
+                ),
+                2,
+            )
+
+        summary_parts = [
+            (
+                f"The rebalancing plan contains "
+                f"{len(plan)} holdings."
+            ),
+            (
+                f"{increase_count} "
+                f"{'holding is' if increase_count == 1 else 'holdings are'} "
+                f"marked for increase, {reduce_count} for reduction, "
+                f"and {maintain_count} for maintenance."
+            ),
+            (
+                f"Total proposed weight increase is "
+                f"{total_increase:.2f}% and total proposed "
+                f"weight reduction is "
+                f"{total_reduction:.2f}%."
+            ),
+            (
+                f"Estimated portfolio turnover is "
+                f"{portfolio_turnover:.2f}%."
+            ),
+        ]
+
+        if largest_increase_company_name:
+            summary_parts.append(
+                f"The largest increase is "
+                f"{largest_increase_company_name} "
+                f"at +{largest_increase_pct:.2f}%."
+            )
+
+        if largest_reduction_company_name:
+            summary_parts.append(
+                f"The largest reduction is "
+                f"{largest_reduction_company_name} "
+                f"at -{largest_reduction_pct:.2f}%."
+            )
+
+        return {
+            "year": year,
+            "holding_count": len(plan),
+            "increase_count": increase_count,
+            "reduce_count": reduce_count,
+            "maintain_count": maintain_count,
+            "changed_holdings_count": changed_holdings_count,
+            "total_increase_pct": total_increase,
+            "total_reduction_pct": total_reduction,
+            "portfolio_turnover_pct": portfolio_turnover,
+            "largest_increase_company_id":
+                largest_increase_company_id,
+            "largest_increase_company_name":
+                largest_increase_company_name,
+            "largest_increase_pct":
+                largest_increase_pct,
+            "largest_reduction_company_id":
+                largest_reduction_company_id,
+            "largest_reduction_company_name":
+                largest_reduction_company_name,
+            "largest_reduction_pct":
+                largest_reduction_pct,
+            "summary": " ".join(summary_parts),
+            "rebalancing_result": result,
+        }
+
+    # =========================================================
     # Day 30 - Portfolio Rebalancing Report Export
     # =========================================================
 

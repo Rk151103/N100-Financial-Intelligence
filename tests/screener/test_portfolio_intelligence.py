@@ -1606,3 +1606,156 @@ def test_rebalancing_report_does_not_mutate_weights(
     )
 
     assert current_weights == original_weights
+
+
+
+# =========================================================
+# Day 31 - Rebalancing Action Summary Tests
+# =========================================================
+
+def test_rebalancing_summary():
+    engine = PortfolioIntelligenceEngine()
+
+    summary = engine.rebalancing_summary(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert summary["holding_count"] == 2
+    assert summary["increase_count"] == 1
+    assert summary["reduce_count"] == 1
+    assert summary["maintain_count"] == 0
+    assert summary["changed_holdings_count"] == 2
+
+
+def test_rebalancing_summary_weight_movements():
+    engine = PortfolioIntelligenceEngine()
+
+    summary = engine.rebalancing_summary(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert summary["total_increase_pct"] == 20.0
+    assert summary["total_reduction_pct"] == 20.0
+    assert summary["portfolio_turnover_pct"] == 20.0
+
+
+def test_rebalancing_summary_largest_increase():
+    engine = PortfolioIntelligenceEngine()
+
+    summary = engine.rebalancing_summary(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert (
+        summary["largest_increase_company_id"]
+        == "TCS"
+    )
+
+    assert (
+        summary["largest_increase_company_name"]
+        == "Tata Consultancy Services Ltd"
+    )
+
+    assert summary["largest_increase_pct"] == 20.0
+
+
+def test_rebalancing_summary_largest_reduction():
+    engine = PortfolioIntelligenceEngine()
+
+    summary = engine.rebalancing_summary(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert (
+        summary["largest_reduction_company_id"]
+        == "HAL"
+    )
+
+    assert (
+        summary["largest_reduction_company_name"]
+        == "Hindustan Aeronautics Ltd"
+    )
+
+    assert summary["largest_reduction_pct"] == 20.0
+
+
+def test_rebalancing_summary_contains_narrative():
+    engine = PortfolioIntelligenceEngine()
+
+    summary = engine.rebalancing_summary(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    assert isinstance(summary["summary"], str)
+    assert "portfolio turnover" in summary["summary"].lower()
+    assert "Tata Consultancy Services Ltd" in summary["summary"]
+    assert "Hindustan Aeronautics Ltd" in summary["summary"]
+
+
+def test_rebalancing_summary_contains_result_metadata():
+    engine = PortfolioIntelligenceEngine()
+
+    summary = engine.rebalancing_summary(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        step=10,
+        max_weight=60,
+    )
+
+    result = summary["rebalancing_result"]
+
+    assert result["current_portfolio_score"] is not None
+    assert result["recommended_portfolio_score"] is not None
+
+
+def test_rebalancing_summary_does_not_mutate_weights():
+    engine = PortfolioIntelligenceEngine()
+
+    current_weights = {
+        "HAL": 70,
+        "TCS": 30,
+    }
+
+    original = current_weights.copy()
+
+    engine.rebalancing_summary(
+        ["HAL", "TCS"],
+        current_weights=current_weights,
+        step=10,
+        max_weight=60,
+    )
+
+    assert current_weights == original
