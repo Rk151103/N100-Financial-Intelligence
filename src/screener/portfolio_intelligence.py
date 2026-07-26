@@ -1242,6 +1242,100 @@ class PortfolioIntelligenceEngine:
         return plan
 
     # =========================================================
+    # Day 30 - Portfolio Rebalancing Report Export
+    # =========================================================
+
+    def export_rebalancing_report(
+        self,
+        company_ids,
+        current_weights=None,
+        year="Mar 2024",
+        output_path=None,
+        ignore_invalid=False,
+        step=5,
+        max_weight=40,
+    ):
+        """Generate and export the portfolio rebalancing plan."""
+
+        plan = self.generate_rebalancing_plan(
+            company_ids,
+            current_weights=current_weights,
+            year=year,
+            ignore_invalid=ignore_invalid,
+            step=step,
+            max_weight=max_weight,
+        )
+
+        result = plan.attrs.get(
+            "rebalancing_result",
+            {},
+        )
+
+        if output_path is None:
+            OUTPUT_DIR.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+            output_path = (
+                OUTPUT_DIR
+                / "portfolio_rebalancing_report.csv"
+            )
+        else:
+            output_path = Path(output_path)
+
+            output_path.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+
+        export_df = plan.copy()
+
+        export_df.to_csv(
+            output_path,
+            index=False,
+        )
+
+        return {
+            "output_path": output_path,
+            "row_count": len(export_df),
+            "year": year,
+            "current_portfolio_score": result.get(
+                "current_portfolio_score"
+            ),
+            "recommended_portfolio_score": result.get(
+                "recommended_portfolio_score"
+            ),
+            "portfolio_score_change": result.get(
+                "portfolio_score_change"
+            ),
+            "current_diversification_score": result.get(
+                "current_diversification_score"
+            ),
+            "recommended_diversification_score": result.get(
+                "recommended_diversification_score"
+            ),
+            "diversification_change": result.get(
+                "diversification_change"
+            ),
+            "current_concentration_risk": result.get(
+                "current_concentration_risk"
+            ),
+            "recommended_concentration_risk": result.get(
+                "recommended_concentration_risk"
+            ),
+            "current_largest_sector_weight_pct": result.get(
+                "current_largest_sector_weight_pct"
+            ),
+            "recommended_largest_sector_weight_pct": result.get(
+                "recommended_largest_sector_weight_pct"
+            ),
+            "largest_sector_weight_change": result.get(
+                "largest_sector_weight_change"
+            ),
+        }
+
+    # =========================================================
     # CSV Export
     # =========================================================
 

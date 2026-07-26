@@ -1308,3 +1308,301 @@ def test_rebalancing_plan_does_not_mutate_weights():
     )
 
     assert weights == original
+
+
+# =========================================================
+# Day 30 - Portfolio Rebalancing Report Export
+# =========================================================
+
+def test_rebalancing_report_export(tmp_path):
+    engine = PortfolioIntelligenceEngine()
+
+    output_path = (
+        tmp_path / "rebalancing_report.csv"
+    )
+
+    result = engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=output_path,
+        step=10,
+        max_weight=60,
+    )
+
+    assert output_path.exists()
+    assert result["output_path"] == output_path
+    assert result["row_count"] == 2
+
+
+def test_rebalancing_report_columns(tmp_path):
+    engine = PortfolioIntelligenceEngine()
+
+    output_path = tmp_path / "report.csv"
+
+    engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=output_path,
+        step=10,
+        max_weight=60,
+    )
+
+    import pandas as pd
+
+    df = pd.read_csv(output_path)
+
+    expected_columns = {
+        "company_id",
+        "company_name",
+        "current_weight_pct",
+        "recommended_weight_pct",
+        "weight_change_pct",
+        "action",
+    }
+
+    assert expected_columns.issubset(
+        set(df.columns)
+    )
+
+
+def test_rebalancing_report_row_count(tmp_path):
+    engine = PortfolioIntelligenceEngine()
+
+    output_path = tmp_path / "report.csv"
+
+    result = engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=output_path,
+        step=10,
+        max_weight=60,
+    )
+
+    import pandas as pd
+
+    df = pd.read_csv(output_path)
+
+    assert len(df) == 2
+    assert result["row_count"] == len(df)
+
+
+def test_rebalancing_report_weights_total_100(
+    tmp_path,
+):
+    engine = PortfolioIntelligenceEngine()
+
+    output_path = tmp_path / "report.csv"
+
+    engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=output_path,
+        step=10,
+        max_weight=60,
+    )
+
+    import pandas as pd
+
+    df = pd.read_csv(output_path)
+
+    assert round(
+        df["recommended_weight_pct"].sum(),
+        2,
+    ) == 100.0
+
+
+def test_rebalancing_report_actions(tmp_path):
+    engine = PortfolioIntelligenceEngine()
+
+    output_path = tmp_path / "report.csv"
+
+    engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=output_path,
+        step=10,
+        max_weight=60,
+    )
+
+    import pandas as pd
+
+    df = pd.read_csv(output_path)
+
+    actions = set(df["action"])
+
+    assert "Reduce" in actions
+    assert "Increase" in actions
+
+
+def test_rebalancing_report_metadata(tmp_path):
+    engine = PortfolioIntelligenceEngine()
+
+    output_path = tmp_path / "report.csv"
+
+    result = engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=output_path,
+        step=10,
+        max_weight=60,
+    )
+
+    assert (
+        result["current_portfolio_score"]
+        is not None
+    )
+
+    assert (
+        result["recommended_portfolio_score"]
+        is not None
+    )
+
+    assert (
+        result["portfolio_score_change"]
+        is not None
+    )
+
+    assert (
+        result["current_diversification_score"]
+        is not None
+    )
+
+    assert (
+        result["recommended_diversification_score"]
+        is not None
+    )
+
+    assert (
+        result["current_concentration_risk"]
+        is not None
+    )
+
+    assert (
+        result["recommended_concentration_risk"]
+        is not None
+    )
+
+
+def test_rebalancing_report_improves_diversification(
+    tmp_path,
+):
+    engine = PortfolioIntelligenceEngine()
+
+    result = engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=(
+            tmp_path / "report.csv"
+        ),
+        step=10,
+        max_weight=60,
+    )
+
+    assert (
+        result["recommended_diversification_score"]
+        >=
+        result["current_diversification_score"]
+    )
+
+
+def test_rebalancing_report_reduces_concentration(
+    tmp_path,
+):
+    engine = PortfolioIntelligenceEngine()
+
+    result = engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=(
+            tmp_path / "report.csv"
+        ),
+        step=10,
+        max_weight=60,
+    )
+
+    assert (
+        result[
+            "recommended_largest_sector_weight_pct"
+        ]
+        <=
+        result[
+            "current_largest_sector_weight_pct"
+        ]
+    )
+
+
+def test_rebalancing_report_custom_output_directory(
+    tmp_path,
+):
+    engine = PortfolioIntelligenceEngine()
+
+    output_path = (
+        tmp_path
+        / "nested"
+        / "reports"
+        / "portfolio_rebalancing.csv"
+    )
+
+    result = engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights={
+            "HAL": 70,
+            "TCS": 30,
+        },
+        output_path=output_path,
+        step=10,
+        max_weight=60,
+    )
+
+    assert output_path.exists()
+    assert output_path.parent.exists()
+    assert result["output_path"] == output_path
+
+
+def test_rebalancing_report_does_not_mutate_weights(
+    tmp_path,
+):
+    engine = PortfolioIntelligenceEngine()
+
+    current_weights = {
+        "HAL": 70,
+        "TCS": 30,
+    }
+
+    original_weights = current_weights.copy()
+
+    engine.export_rebalancing_report(
+        ["HAL", "TCS"],
+        current_weights=current_weights,
+        output_path=(
+            tmp_path / "report.csv"
+        ),
+        step=10,
+        max_weight=60,
+    )
+
+    assert current_weights == original_weights

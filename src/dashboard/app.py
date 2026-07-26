@@ -1723,6 +1723,28 @@ elif dashboard_view == "Portfolio Intelligence":
                     "outputs and do not constitute investment advice."
                 )
 
+                # ---------------------------------------------
+                # Day 30 - Rebalancing Report Export
+                # ---------------------------------------------
+
+                st.markdown("#### Rebalancing Report")
+
+                rebalancing_csv = (
+                    rebalancing_plan
+                    .to_csv(index=False)
+                    .encode("utf-8")
+                )
+
+                st.download_button(
+                    "Download Rebalancing Report",
+                    data=rebalancing_csv,
+                    file_name=(
+                        "n100_portfolio_rebalancing_report.csv"
+                    ),
+                    mime="text/csv",
+                    key="download_rebalancing_report",
+                )
+
             except Exception as exc:
                 st.error(
                     f"Unable to generate rebalancing suggestion: {exc}"
