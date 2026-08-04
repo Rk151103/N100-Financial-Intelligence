@@ -139,3 +139,38 @@ python -m src.reports.portfolio_summary_pdf
 B.Tech CSE (AI & ML)
 
 Bluestock Fintech Capstone Project - N100 Financial Intelligence Platform
+## Documentation
+
+The N100 Financial Intelligence Platform documentation covers the complete development lifecycle of the project.
+
+### Sprint 1 - Data Foundation
+- ETL Pipeline
+- Data Ingestion
+- SQLite Database
+- Data Validation
+
+### Sprint 2 - Financial Ratio Engine
+- Financial Ratios
+- CAGR Analysis
+- Company Intelligence
+- Peer Comparison
+
+### Sprint 3 - Screener & Intelligence
+- Stock Screener
+- Portfolio Intelligence
+- Sector Intelligence
+
+### Sprint 4 - Dashboard & Valuation
+- Streamlit Dashboard
+- Company Profile
+- Trend Analysis
+- Valuation Module
+
+### Sprint 5 - NLP & Reporting
+- Analysis Parser
+- Pros & Cons Generator
+- Cash Flow Intelligence
+- Capital Allocation
+- Company PDF Tearsheet
+- Batch PDF Generation
+- Portfolio Summary PDF
